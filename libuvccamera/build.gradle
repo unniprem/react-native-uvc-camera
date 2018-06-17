@@ -83,6 +83,10 @@ task ndkClean(type: Exec, description: 'clean JNI libraries') {
 
 clean.dependsOn 'ndkClean'
 
+repositories {
+    maven { url 'http://raw.github.com/saki4510t/libcommon/master/repository/' }
+}
+
 dependencies {
     compile fileTree(dir: new File(buildDir, 'libs'), include: '*.jar')
 	compile "com.android.support:support-annotations:${supportLibVersion}"

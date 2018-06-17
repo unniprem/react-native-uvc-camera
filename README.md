@@ -21,6 +21,71 @@ All files in the folder are under this Apache License, Version 2.0.
 Files in the jni/libjpeg, jni/libusb and jin/libuvc folders may have a different license,
 see the respective files.
 
+react native usage
+=========
+## Installation (Android)
+
+* Add `android/local.properties` , `android-ndk` need just `r14b`,e.g.
+```
+sdk.dir=D\:\\proj\\tools\\android-sdk
+ndk.dir=D\:\\proj\\tools\\android-ndk-r14b
+```
+
+* In `android/settings.gradle`
+
+```
+...
+include ':usbCameraCommon'
+project(':usbCameraCommon').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-uvc-camera/usbCameraCommon')
+include ':libuvccamera'
+project(':libuvccamera').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-uvc-camera/libuvccamera')
+```
+
+* In `android/app/build.gradle`
+
+```
+...
+android {
+    ...
+    defaultConfig {
+        ...
+        minSdkVersion 18
+        ...
+    }
+    ...
+}
+...
+repositories {
+    maven { url 'http://raw.github.com/saki4510t/libcommon/master/repository/' }
+}
+
+dependencies {
+    compile project(':usbCameraCommon')
+    ...
+}
+```
+
+* In `android/app/src/main/AndroidManifest.xml`
+```
+...
+    <uses-sdk
+        android:minSdkVersion="18"
+```
+
+* In `android/build.gradle`
+
+```
+...
+ext {
+    versionBuildTool            = "26.0.2"
+    versionCompiler             = 26
+    versionTarget               = 26
+    commonLibVersion            = "1.5.20"
+    javaSourceCompatibility     = JavaVersion.VERSION_1_7
+    javaTargetCompatibility     = JavaVersion.VERSION_1_7
+}
+```
+
 How to compile library  
 =========
 The Gradle build system will build the entire project, including the NDK parts. If you want to build with Gradle build system,
