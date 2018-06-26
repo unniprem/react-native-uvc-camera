@@ -47,6 +47,7 @@ repositories {
     // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
     url "$rootDir/../node_modules/react-native/android"
   }
+  maven { url 'http://raw.github.com/saki4510t/libcommon/master/repository/' }
 }
 
 dependencies {
@@ -61,4 +62,7 @@ dependencies {
   implementation "com.android.support:exifinterface:$supportLibVersion"
   implementation "com.android.support:support-annotations:$supportLibVersion"
   implementation "com.android.support:support-v4:$supportLibVersion"
+
+  compile project(':usbCameraCommon')
+  compile project(':react-native-camera')
 }

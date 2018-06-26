@@ -108,8 +108,8 @@ const CameraStatus = {
   NOT_AUTHORIZED: 'NOT_AUTHORIZED',
 };
 
-const CameraManager: Object = NativeModules.RNCameraManager ||
-  NativeModules.RNCameraModule || {
+const CameraManager: Object = NativeModules.UvcCameraManager ||
+  NativeModules.UvcCameraModule || {
     stubbed: true,
     Type: {
       back: 1,
@@ -408,7 +408,7 @@ export default class Camera extends React.Component<PropsType, StateType> {
 
 export const Constants = Camera.Constants;
 
-const RNCamera = requireNativeComponent('RNCamera', Camera, {
+const RNCamera = requireNativeComponent('UvcCamera', Camera, {
   nativeOnly: {
     accessibilityComponentType: true,
     accessibilityLabel: true,

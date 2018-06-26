@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/flyskywhy/UVCCamera/issues"
   },
-  "homepage": "https://github.com/flyskywhy/UVCCamera#readme"
+  "homepage": "https://github.com/flyskywhy/UVCCamera#readme",
+  "dependencies": {
+    "react-native-camera": "1.1.4"
+  }
 }
