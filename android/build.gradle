@@ -54,8 +54,8 @@ dependencies {
   def googlePlayServicesVersion = rootProject.hasProperty('googlePlayServicesVersion')  ? rootProject.googlePlayServicesVersion : DEFAULT_GOOGLE_PLAY_SERVICES_VERSION
   def supportLibVersion = rootProject.hasProperty('supportLibVersion')  ? rootProject.supportLibVersion : DEFAULT_SUPPORT_LIBRARY_VERSION
 
-  compileOnly 'com.facebook.react:react-native:+'
-  compileOnly 'com.facebook.infer.annotation:infer-annotation:+'
+  compileOnly ('com.facebook.react:react-native:0.51.0') { force = true }
+  // compileOnly 'com.facebook.infer.annotation:infer-annotation:+'
   implementation "com.google.zxing:core:3.2.1"
   implementation "com.drewnoakes:metadata-extractor:2.9.1"
   implementation "com.google.android.gms:play-services-vision:$googlePlayServicesVersion"
