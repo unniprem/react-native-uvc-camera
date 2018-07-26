@@ -44,6 +44,8 @@ import java.util.Set;
 
 public class CameraView extends FrameLayout {
 
+    private int mDisplayRotation;
+
     /** The camera device faces the opposite direction as the device's screen. */
     public static final int FACING_BACK = Constants.FACING_BACK;
 
@@ -115,7 +117,7 @@ public class CameraView extends FrameLayout {
         mDisplayOrientationDetector = new DisplayOrientationDetector(context) {
             @Override
             public void onDisplayOrientationChanged(int displayOrientation) {
-                mImpl.setDisplayOrientation(displayOrientation);
+                mImpl.setDisplayOrientation(displayOrientation + mDisplayRotation);
             }
         };
     }
@@ -206,6 +208,7 @@ public class CameraView extends FrameLayout {
     @Override
     protected Parcelable onSaveInstanceState() {
         SavedState state = new SavedState(super.onSaveInstanceState());
+        state.displayRotation = getDisplayRotation();
         state.facing = getFacing();
         state.ratio = getAspectRatio();
         state.autoFocus = getAutoFocus();
@@ -225,6 +228,7 @@ public class CameraView extends FrameLayout {
         }
         SavedState ss = (SavedState) state;
         super.onRestoreInstanceState(ss.getSuperState());
+        setDisplayRotation(ss.displayRotation);
         setFacing(ss.facing);
         setAspectRatio(ss.ratio);
         setAutoFocus(ss.autoFocus);
@@ -321,6 +325,24 @@ public class CameraView extends FrameLayout {
         return mImpl.getView();
       }
       return null;
+    }
+
+    /**
+     * Sets the camera rotation.
+     *
+     * @param displayRotation The camera rotation. Can be 0, 90, 180, or 270.
+     */
+    public void setDisplayRotation(int displayRotation) {
+      mDisplayRotation = displayRotation;
+    }
+
+    /**
+     * Gets the camera rotation.
+     *
+     * @return The camera rotation.
+     */
+    public int getDisplayRotation() {
+        return mDisplayRotation;
     }
 
     /**
@@ -542,6 +564,8 @@ public class CameraView extends FrameLayout {
 
     protected static class SavedState extends BaseSavedState {
 
+        int displayRotation;
+
         @Facing
         int facing;
 
@@ -563,6 +587,7 @@ public class CameraView extends FrameLayout {
         @SuppressWarnings("WrongConstant")
         public SavedState(Parcel source, ClassLoader loader) {
             super(source);
+            displayRotation = source.readInt();
             facing = source.readInt();
             ratio = source.readParcelable(loader);
             autoFocus = source.readByte() != 0;
@@ -580,6 +605,7 @@ public class CameraView extends FrameLayout {
         @Override
         public void writeToParcel(Parcel out, int flags) {
             super.writeToParcel(out, flags);
+            out.writeInt(displayRotation);
             out.writeInt(facing);
             out.writeParcelable(ratio, 0);
             out.writeByte((byte) (autoFocus ? 1 : 0));

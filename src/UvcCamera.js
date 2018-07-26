@@ -73,6 +73,7 @@ type EventCallbackArgumentsType = {
 };
 
 type PropsType = typeof View.props & {
+  rotation?: number,
   zoom?: number,
   ratio?: string,
   focusDepth?: number,
@@ -167,6 +168,7 @@ export default class Camera extends React.Component<PropsType, StateType> {
 
   static propTypes = {
     ...ViewPropTypes,
+    rotation: PropTypes.number,
     zoom: PropTypes.number,
     ratio: PropTypes.string,
     focusDepth: PropTypes.number,
@@ -195,6 +197,7 @@ export default class Camera extends React.Component<PropsType, StateType> {
   };
 
   static defaultProps: Object = {
+    rotation: 0,
     zoom: 0,
     ratio: '4:3',
     focusDepth: 0,

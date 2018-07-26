@@ -64,6 +64,11 @@ public class UvcCameraViewManager extends ViewGroupManager<UvcCameraView> {
     return builder.build();
   }
 
+  @ReactProp(name = "rotation")
+  public void setDisplayRotation(UvcCameraView view, int rotation) {
+    view.setDisplayRotation(rotation);
+  }
+
   @ReactProp(name = "type")
   public void setType(UvcCameraView view, int type) {
     view.setFacing(type);
