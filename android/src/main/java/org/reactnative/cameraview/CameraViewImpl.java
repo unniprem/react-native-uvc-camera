@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package com.google.android.cameraview;
+package org.reactnative.cameraview;
 
 import android.media.CamcorderProfile;
 import android.view.View;
 import android.graphics.SurfaceTexture;
+import com.google.android.cameraview.AspectRatio;
+import com.google.android.cameraview.Size;
 
 import java.util.Set;
 
@@ -43,6 +45,8 @@ abstract class CameraViewImpl {
     abstract boolean start();
 
     abstract void stop();
+
+    abstract void destroy();
 
     abstract boolean isCameraOpened();
 

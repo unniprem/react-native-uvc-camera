@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package com.google.android.cameraview;
+package org.reactnative.cameraview;
 
 import android.support.v4.util.ArrayMap;
+import com.google.android.cameraview.AspectRatio;
+import com.google.android.cameraview.Size;
 
 import java.util.Set;
 import java.util.SortedSet;

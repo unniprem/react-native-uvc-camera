@@ -107,7 +107,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 		}
 		mHasSurface = true;
 		if (mCallback != null) {
-			mCallback.onSurfaceCreated(this, getSurface());
+			mCallback.onSurfaceCreated(this, getSurface(), width, height);
 		}
 	}
 
@@ -212,7 +212,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 	public void resetFps() {
 		mFpsCounter.reset();
 	}
-	
+
 	/** update frame rate of image processing */
 	public void updateFps() {
 		mFpsCounter.update();
@@ -254,7 +254,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 
 		public static final RenderHandler createHandler(final FpsCounter counter,
 			final SurfaceTexture surface, final int width, final int height) {
-			
+
 			final RenderThread thread = new RenderThread(counter, surface, width, height);
 			thread.start();
 			return thread.getHandler();

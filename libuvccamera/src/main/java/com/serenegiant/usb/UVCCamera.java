@@ -338,6 +338,25 @@ public class UVCCamera {
 		return getSupportedSize(type, mSupportedSize);
 	}
 
+	public Size getNearestSize(final int width, final int height, int frameFormat) {
+		final int type = (frameFormat > 0) ? 6 : 4;
+		List<Size> sizes = getSupportedSize(type, mSupportedSize);
+		int required_area = width * height;
+		Size preview_size = null;
+		int error = Integer.MAX_VALUE;
+
+		for (Size s : sizes) {
+			int s_area = s.width * s.height;
+			int abs_error = Math.abs(s_area - required_area);
+			if (abs_error < error){
+			preview_size = s;
+				error = abs_error;
+			}
+		}
+
+		return preview_size;
+	}
+
 	public static List<Size> getSupportedSize(final int type, final String supportedSize) {
 		final List<Size> result = new ArrayList<Size>();
 		if (!TextUtils.isEmpty(supportedSize))

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.android.cameraview;
+package org.reactnative.cameraview;
 
 import android.content.Context;
 import android.util.SparseIntArray;

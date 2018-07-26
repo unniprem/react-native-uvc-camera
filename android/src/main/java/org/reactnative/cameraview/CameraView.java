@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.android.cameraview;
+package org.reactnative.cameraview;
 
 import android.app.Activity;
 import android.content.Context;
@@ -32,6 +32,10 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.graphics.SurfaceTexture;
+import com.google.android.cameraview.AspectRatio;
+import com.google.android.cameraview.Constants;
+import com.google.android.cameraview.Size;
+import org.reactnative.cameraview.CameraUvc;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -104,13 +108,8 @@ public class CameraView extends FrameLayout {
         // Internal setup
         final PreviewImpl preview = createPreviewImpl(context);
         mCallbacks = new CallbackBridge();
-        if (fallbackToOldApi || Build.VERSION.SDK_INT < 21) {
-            mImpl = new Camera1(mCallbacks, preview);
-        } else if (Build.VERSION.SDK_INT < 23) {
-            mImpl = new Camera2(mCallbacks, preview, context);
-        } else {
-            mImpl = new Camera2Api23(mCallbacks, preview, context);
-        }
+
+        mImpl = new CameraUvc(mCallbacks, preview, context);
 
         // Display orientation detector
         mDisplayOrientationDetector = new DisplayOrientationDetector(context) {
@@ -124,11 +123,7 @@ public class CameraView extends FrameLayout {
     @NonNull
     private PreviewImpl createPreviewImpl(Context context) {
         PreviewImpl preview;
-        if (Build.VERSION.SDK_INT < 14) {
-            preview = new SurfaceViewPreview(context, this);
-        } else {
-            preview = new TextureViewPreview(context, this);
-        }
+        preview = new UvcTextureViewPreview(context, this);
         return preview;
     }
 
@@ -241,36 +236,6 @@ public class CameraView extends FrameLayout {
     }
 
     public void setUsingCamera2Api(boolean useCamera2) {
-        if (Build.VERSION.SDK_INT < 21) {
-            return;
-        }
-
-        boolean wasOpened = isCameraOpened();
-        Parcelable state = onSaveInstanceState();
-
-        if (useCamera2) {
-            if (wasOpened) {
-                stop();
-            }
-            if (Build.VERSION.SDK_INT < 23) {
-                mImpl = new Camera2(mCallbacks, mImpl.mPreview, mContext);
-            } else {
-                mImpl = new Camera2Api23(mCallbacks, mImpl.mPreview, mContext);
-            }
-        } else {
-            if (mImpl instanceof Camera1) {
-                return;
-            }
-
-            if (wasOpened) {
-                stop();
-            }
-            mImpl = new Camera1(mCallbacks, mImpl.mPreview);
-        }
-        onRestoreInstanceState(state);
-        if (wasOpened) {
-            start();
-        }
     }
 
     /**
@@ -279,15 +244,15 @@ public class CameraView extends FrameLayout {
      */
     public void start() {
         if (!mImpl.start()) {
-            if (mImpl.getView() != null) {
-                this.removeView(mImpl.getView());
-            }
-            //store the state and restore this state after fall back to Camera1
-            Parcelable state=onSaveInstanceState();
-            // Camera2 uses legacy hardware layer; fall back to Camera1
-            mImpl = new Camera1(mCallbacks, createPreviewImpl(getContext()));
-            onRestoreInstanceState(state);
-            mImpl.start();
+            // if (mImpl.getView() != null) {
+            //     this.removeView(mImpl.getView());
+            // }
+            // //store the state and restore this state after fall back to Camera1
+            // Parcelable state=onSaveInstanceState();
+            // // Camera2 uses legacy hardware layer; fall back to Camera1
+            // mImpl = new Camera1(mCallbacks, createPreviewImpl(getContext()));
+            // onRestoreInstanceState(state);
+            // mImpl.start();
         }
     }
 
@@ -297,6 +262,10 @@ public class CameraView extends FrameLayout {
      */
     public void stop() {
         mImpl.stop();
+    }
+
+    public void destroy() {
+        mImpl.destroy();
     }
 
     /**
