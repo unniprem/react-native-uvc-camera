@@ -1,0 +1,7 @@
+/.idea
+/gradle*
+/usbCameraTest*
+/.eslintrc
+/UVCCamera.iml
+/build.gradle
+/settings.gradle
