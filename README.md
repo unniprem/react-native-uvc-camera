@@ -5,7 +5,7 @@ A React Native component to access to UVC web camera on non-rooted Android devic
 
 ## Installation (Android)
 
-* Add `android/local.properties` , `android-ndk` need just `r14b`, e.g.
+* Add `android/local.properties` , `android-ndk` need just `r14b` in [NDK Archives](https://developer.android.google.cn/ndk/downloads/older_releases), e.g.
 ```
 sdk.dir=D\:\\proj\\tools\\android-sdk
 ndk.dir=D\:\\proj\\tools\\android-ndk-r14b
