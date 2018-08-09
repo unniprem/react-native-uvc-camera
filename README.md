@@ -93,3 +93,15 @@ UvcCamera Properties additional to RNCamera:
 Values: `0, 90, 180, or 270.`
 
 Most USB cameras have different rotation by default. It adjusts your camera rotation by your own.
+
+## Customization
+As said in `android/src/main/java/org/reactnative/cameraview/CameraUvc.java` :
+
+        public void onStartPreview(){
+            // some USB camera will not return onPictureTaken and onVideoRecorded by uncomment some of bellow, test them by your own
+            // updateAutoFocus();
+            // updateFlash();
+            // updateFocusDepth();
+            // updateWhiteBalance();
+            // updateZoom();
+        }
