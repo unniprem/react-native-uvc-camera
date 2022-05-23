@@ -220,7 +220,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 			switch (compoundButton.getId()) {
 			case R.id.camera_button:
 				if (isChecked && !mCameraHandler.isOpened()) {
-					CameraDialog.showDialog(MainActivity.this);
+//					CameraDialog.showDialog(MainActivity.this);
 				} else {
 					mCameraHandler.close();
 					setCameraButton(false);
