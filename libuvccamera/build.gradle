@@ -26,15 +26,14 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 android {
 	compileSdkVersion versionCompiler
-	buildToolsVersion versionBuildTool
 
 	compileOptions {
-		sourceCompatibility javaSourceCompatibility
-		targetCompatibility javaTargetCompatibility
+		sourceCompatibility JavaVersion.VERSION_1_8
+		targetCompatibility JavaVersion.VERSION_1_8
 	}
 
     defaultConfig {
-        minSdkVersion 14
+        minSdkVersion 18
 		targetSdkVersion versionTarget
     }
 
@@ -83,14 +82,13 @@ task ndkClean(type: Exec, description: 'clean JNI libraries') {
 
 clean.dependsOn 'ndkClean'
 
-repositories {
-    maven { url 'http://raw.github.com/saki4510t/libcommon/master/repository/' }
-}
-
 dependencies {
-    compile fileTree(dir: new File(buildDir, 'libs'), include: '*.jar')
-	compile "com.android.support:support-annotations:${supportLibVersion}"
-	compile("com.serenegiant:common:${commonLibVersion}") {
+    implementation fileTree(dir: new File(buildDir, 'libs'), include: '*.jar')
+
+	implementation "com.android.support:support-v4:${supportLibVersion}"
+	implementation "com.android.support:support-annotations:${supportLibVersion}"
+
+	implementation("com.serenegiant:common:$commonLibVersion") {
 		exclude module: 'support-v4'
 	}
 }

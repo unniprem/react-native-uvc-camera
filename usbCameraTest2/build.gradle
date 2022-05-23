@@ -25,7 +25,6 @@ apply plugin: 'com.android.application'
 
 android {
 	compileSdkVersion versionCompiler
-	buildToolsVersion versionBuildTool
 
 	compileOptions {
 		sourceCompatibility javaSourceCompatibility
@@ -49,5 +48,13 @@ android {
 }
 
 dependencies {
-    compile project(':libuvccamera')
+	api fileTree(dir: 'libs', include: ['*.jar'])
+
+	implementation "com.android.support:support-v4:${supportLibVersion}"
+	implementation "com.android.support:support-annotations:${supportLibVersion}"
+
+	implementation("com.serenegiant:common:${commonLibVersion}") {
+		exclude module: 'support-v4'
+	}
+	implementation project(':libuvccamera')
 }

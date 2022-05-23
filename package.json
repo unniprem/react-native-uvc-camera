@@ -22,7 +22,6 @@
   },
   "homepage": "https://github.com/flyskywhy/react-native-uvc-camera#readme",
   "peerDependencies": {
-    "react-native": "0.51.0",
-    "react-native-camera": "1.1.4"
+    "react-native-camera": "3.44.0"
   }
 }

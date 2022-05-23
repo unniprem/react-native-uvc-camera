@@ -1,17 +1,22 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     repositories {
-        jcenter()
+			maven { url 'https://maven.google.com' }
+			jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.1'
+        classpath 'com.android.tools.build:gradle:7.0.2'
     }
 }
 
 allprojects {
     repositories {
-		maven { url 'http://raw.github.com/saki4510t/libcommon/master/repository/' }
-        jcenter()
+			maven { url 'https://maven.google.com' }
+			maven { 
+				url 'http://raw.github.com/saki4510t/libcommon/master/repository/'
+				allowInsecureProtocol = true
+			}
+			jcenter()
     }
 }
 
@@ -20,12 +25,11 @@ task clean(type: Delete) {
 }
 
 ext {
-	supportLibVersion = '25.3.1'  // variable that can be referenced to keep support libs consistent
-	commonLibVersion= '1.5.20'
-	versionBuildTool = '25.0.2'
-	versionCompiler = 25
-	versionTarget = 23
+	supportLibVersion = '27.1.1'  // variable that can be referenced to keep support libs consistent
+	commonLibVersion= '4.1.1'
+	versionCompiler = 31
+	versionTarget = 27
 	versionNameString = '1.0.0'
-	javaSourceCompatibility = JavaVersion.VERSION_1_7
-	javaTargetCompatibility = JavaVersion.VERSION_1_7
+	javaSourceCompatibility = JavaVersion.VERSION_1_8
+	javaTargetCompatibility = JavaVersion.VERSION_1_8
 }
