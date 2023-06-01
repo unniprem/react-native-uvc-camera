@@ -1,14 +1,15 @@
 buildscript {
-  repositories {
-    jcenter()
-    google()
-    maven {
-      url 'https://maven.google.com'
+  if (project == rootProject) {
+    repositories {
+      google()
+      maven {
+        url 'https://maven.google.com'
+      }
     }
-  }
 
-  dependencies {
-    classpath 'com.android.tools.build:gradle:3.0.0'
+    dependencies {
+      classpath 'com.android.tools.build:gradle:3.0.0'
+    }
   }
 }
 
@@ -47,7 +48,10 @@ repositories {
     // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
     url "$rootDir/../node_modules/react-native/android"
   }
-  maven { url 'http://raw.github.com/saki4510t/libcommon/master/repository/' }
+  maven {
+    url 'https://raw.githubusercontent.com/saki4510t/libcommon/master/repository'
+    allowInsecureProtocol = true
+  }
 }
 
 dependencies {
@@ -63,6 +67,5 @@ dependencies {
   implementation "com.android.support:support-annotations:$supportLibVersion"
   implementation "com.android.support:support-v4:$supportLibVersion"
 
-  compile project(':usbCameraCommon')
-  compile project(':react-native-camera')
+  implementation project(':usbCameraCommon')
 }

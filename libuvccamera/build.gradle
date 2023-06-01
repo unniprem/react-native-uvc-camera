@@ -1,4 +1,6 @@
 apply plugin: 'com.android.library'
+apply from: "../build.gradle"
+
 /*
  *  UVCCamera
  *  library and sample to access to UVC web camera on non-rooted Android device

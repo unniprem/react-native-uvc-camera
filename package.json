@@ -20,8 +20,5 @@
   "bugs": {
     "url": "https://github.com/flyskywhy/react-native-uvc-camera/issues"
   },
-  "homepage": "https://github.com/flyskywhy/react-native-uvc-camera#readme",
-  "peerDependencies": {
-    "react-native-camera": "1.1.4"
-  }
+  "homepage": "https://github.com/flyskywhy/react-native-uvc-camera#readme"
 }
