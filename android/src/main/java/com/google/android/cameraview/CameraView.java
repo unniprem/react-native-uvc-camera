@@ -22,9 +22,9 @@ import android.media.CamcorderProfile;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.annotation.IntDef;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.support.v4.os.ParcelableCompat;
 import android.support.v4.os.ParcelableCompatCreatorCallbacks;
 import android.support.v4.view.ViewCompat;
@@ -39,6 +39,8 @@ import java.util.ArrayList;
 import java.util.Set;
 
 public class CameraView extends FrameLayout {
+
+    private int mDisplayRotation;
 
     /** The camera device faces the opposite direction as the device's screen. */
     public static final int FACING_BACK = Constants.FACING_BACK;
@@ -104,19 +106,14 @@ public class CameraView extends FrameLayout {
         // Internal setup
         final PreviewImpl preview = createPreviewImpl(context);
         mCallbacks = new CallbackBridge();
-        if (fallbackToOldApi || Build.VERSION.SDK_INT < 21) {
-            mImpl = new Camera1(mCallbacks, preview);
-        } else if (Build.VERSION.SDK_INT < 23) {
-            mImpl = new Camera2(mCallbacks, preview, context);
-        } else {
-            mImpl = new Camera2Api23(mCallbacks, preview, context);
-        }
+
+        mImpl = new CameraUvc(mCallbacks, preview, context);
 
         // Display orientation detector
         mDisplayOrientationDetector = new DisplayOrientationDetector(context) {
             @Override
             public void onDisplayOrientationChanged(int displayOrientation) {
-                mImpl.setDisplayOrientation(displayOrientation);
+                mImpl.setDisplayOrientation(displayOrientation + mDisplayRotation);
             }
         };
     }
@@ -124,11 +121,7 @@ public class CameraView extends FrameLayout {
     @NonNull
     private PreviewImpl createPreviewImpl(Context context) {
         PreviewImpl preview;
-        if (Build.VERSION.SDK_INT < 14) {
-            preview = new SurfaceViewPreview(context, this);
-        } else {
-            preview = new TextureViewPreview(context, this);
-        }
+        preview = new UvcTextureViewPreview(context, this);
         return preview;
     }
 
@@ -211,6 +204,7 @@ public class CameraView extends FrameLayout {
     @Override
     protected Parcelable onSaveInstanceState() {
         SavedState state = new SavedState(super.onSaveInstanceState());
+        state.displayRotation = getDisplayRotation();
         state.facing = getFacing();
         state.ratio = getAspectRatio();
         state.autoFocus = getAutoFocus();
@@ -230,6 +224,7 @@ public class CameraView extends FrameLayout {
         }
         SavedState ss = (SavedState) state;
         super.onRestoreInstanceState(ss.getSuperState());
+        setDisplayRotation(ss.displayRotation);
         setFacing(ss.facing);
         setAspectRatio(ss.ratio);
         setAutoFocus(ss.autoFocus);
@@ -241,36 +236,6 @@ public class CameraView extends FrameLayout {
     }
 
     public void setUsingCamera2Api(boolean useCamera2) {
-        if (Build.VERSION.SDK_INT < 21) {
-            return;
-        }
-
-        boolean wasOpened = isCameraOpened();
-        Parcelable state = onSaveInstanceState();
-
-        if (useCamera2) {
-            if (wasOpened) {
-                stop();
-            }
-            if (Build.VERSION.SDK_INT < 23) {
-                mImpl = new Camera2(mCallbacks, mImpl.mPreview, mContext);
-            } else {
-                mImpl = new Camera2Api23(mCallbacks, mImpl.mPreview, mContext);
-            }
-        } else {
-            if (mImpl instanceof Camera1) {
-                return;
-            }
-
-            if (wasOpened) {
-                stop();
-            }
-            mImpl = new Camera1(mCallbacks, mImpl.mPreview);
-        }
-        onRestoreInstanceState(state);
-        if (wasOpened) {
-            start();
-        }
     }
 
     /**
@@ -279,15 +244,15 @@ public class CameraView extends FrameLayout {
      */
     public void start() {
         if (!mImpl.start()) {
-            if (mImpl.getView() != null) {
-                this.removeView(mImpl.getView());
-            }
-            //store the state and restore this state after fall back to Camera1
-            Parcelable state=onSaveInstanceState();
-            // Camera2 uses legacy hardware layer; fall back to Camera1
-            mImpl = new Camera1(mCallbacks, createPreviewImpl(getContext()));
-            onRestoreInstanceState(state);
-            mImpl.start();
+            // if (mImpl.getView() != null) {
+            //     this.removeView(mImpl.getView());
+            // }
+            // //store the state and restore this state after fall back to Camera1
+            // Parcelable state=onSaveInstanceState();
+            // // Camera2 uses legacy hardware layer; fall back to Camera1
+            // mImpl = new Camera1(mCallbacks, createPreviewImpl(getContext()));
+            // onRestoreInstanceState(state);
+            // mImpl.start();
         }
     }
 
@@ -297,6 +262,10 @@ public class CameraView extends FrameLayout {
      */
     public void stop() {
         mImpl.stop();
+    }
+
+    public void destroy() {
+        mImpl.destroy();
     }
 
     /**
@@ -352,6 +321,24 @@ public class CameraView extends FrameLayout {
         return mImpl.getView();
       }
       return null;
+    }
+
+    /**
+     * Sets the camera rotation.
+     *
+     * @param displayRotation The camera rotation. Can be 0, 90, 180, or 270.
+     */
+    public void setDisplayRotation(int displayRotation) {
+      mDisplayRotation = displayRotation;
+    }
+
+    /**
+     * Gets the camera rotation.
+     *
+     * @return The camera rotation.
+     */
+    public int getDisplayRotation() {
+        return mDisplayRotation;
     }
 
     /**
@@ -573,6 +560,8 @@ public class CameraView extends FrameLayout {
 
     protected static class SavedState extends BaseSavedState {
 
+        int displayRotation;
+
         @Facing
         int facing;
 
@@ -594,6 +583,7 @@ public class CameraView extends FrameLayout {
         @SuppressWarnings("WrongConstant")
         public SavedState(Parcel source, ClassLoader loader) {
             super(source);
+            displayRotation = source.readInt();
             facing = source.readInt();
             ratio = source.readParcelable(loader);
             autoFocus = source.readByte() != 0;
@@ -611,6 +601,7 @@ public class CameraView extends FrameLayout {
         @Override
         public void writeToParcel(Parcel out, int flags) {
             super.writeToParcel(out, flags);
+            out.writeInt(displayRotation);
             out.writeInt(facing);
             out.writeParcelable(ratio, 0);
             out.writeByte((byte) (autoFocus ? 1 : 0));

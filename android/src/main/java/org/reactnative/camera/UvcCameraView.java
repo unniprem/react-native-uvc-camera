@@ -12,7 +12,7 @@ import android.util.SparseArray;
 import android.view.View;
 import com.facebook.react.bridge.*;
 import com.facebook.react.uimanager.ThemedReactContext;
-import org.reactnative.cameraview.CameraView;
+import com.google.android.cameraview.CameraView;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.text.TextBlock;

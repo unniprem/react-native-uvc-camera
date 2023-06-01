@@ -44,6 +44,8 @@ abstract class CameraViewImpl {
 
     abstract void stop();
 
+    abstract void destroy();
+
     abstract boolean isCameraOpened();
 
     abstract void setFacing(int facing);
