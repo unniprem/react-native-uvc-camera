@@ -1,6 +1,6 @@
 {
   "name": "react-native-uvc-camera",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A USB video class Camera component for React Native",
   "main": "src/index.js",
   "scripts": {
@@ -11,6 +11,7 @@
     "url": "git+https://github.com/flyskywhy/react-native-uvc-camera.git"
   },
   "keywords": [
+    "android",
     "uvccamera",
     "react-native",
     "usbcamera"

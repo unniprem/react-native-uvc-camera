@@ -1,4 +1,10 @@
 # React Native UVC Camera
+
+[![npm version](http://img.shields.io/npm/v/react-native-uvc-camera.svg?style=flat-square)](https://npmjs.org/package/react-native-uvc-camera "View this project on npm")
+[![npm downloads](http://img.shields.io/npm/dm/react-native-uvc-camera.svg?style=flat-square)](https://npmjs.org/package/react-native-uvc-camera "View this project on npm")
+[![npm licence](http://img.shields.io/npm/l/react-native-uvc-camera.svg?style=flat-square)](https://npmjs.org/package/react-native-uvc-camera "View this project on npm")
+[![Platform](https://img.shields.io/badge/platform-android-989898.svg?style=flat-square)](https://npmjs.org/package/react-native-uvc-camera "View this project on npm")
+
 A React Native component to access to UVC web camera on non-rooted Android device, a combination of [React Native Camera](https://github.com/react-native-community/react-native-camera) and [UVCCamera](https://github.com/saki4510t/UVCCamera) .
 
 For `RN0.70.5`, [UvcCameraManager branch main](https://github.com/flyskywhy/UvcCameraManager/tree/main) is an example. Since [react-native-camera](https://github.com/react-native-camera/react-native-camera) is deprecated in favor of [react-native-vision-camera](https://github.com/mrousavy/react-native-vision-camera), now `react-native-uvc-camera@2` has merged all code in `react-native-camera@1.1.4`, so
@@ -82,3 +88,10 @@ As said in `android/src/main/java/com/google/android/cameraview/CameraUvc.java` 
             // updateWhiteBalance();
             // updateZoom();
         }
+
+## Donate
+To support my work, please consider donate.
+
+- ETH: 0xd02fa2738dcbba988904b5a9ef123f7a957dbb3e
+
+- <img src="https://raw.githubusercontent.com/flyskywhy/flyskywhy/main/assets/alipay_weixin.png" width="500">
