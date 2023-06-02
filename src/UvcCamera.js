@@ -6,7 +6,6 @@ import {
   findNodeHandle,
   Platform,
   NativeModules,
-  ViewPropTypes,
   requireNativeComponent,
   View,
   ActivityIndicator,
@@ -167,7 +166,6 @@ export default class Camera extends React.Component<PropsType, StateType> {
   };
 
   static propTypes = {
-    ...ViewPropTypes,
     rotation: PropTypes.number,
     zoom: PropTypes.number,
     ratio: PropTypes.string,
@@ -315,7 +313,7 @@ export default class Camera extends React.Component<PropsType, StateType> {
     }
   };
 
-  async componentWillMount() {
+  async UNSAFE_componentWillMount() {
     const hasVideoAndAudio = this.props.captureAudio;
     const isAuthorized = await requestPermissions(
       hasVideoAndAudio,
