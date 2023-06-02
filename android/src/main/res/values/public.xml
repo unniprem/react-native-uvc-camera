@@ -11,20 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-<merge xmlns:android="http://schemas.android.com/apk/res/android">
+<resources>
+    <public name="facing" type="attr"/>
+    <public name="aspectRatio" type="attr"/>
+    <public name="autoFocus" type="attr"/>
+    <public name="flash" type="attr"/>
 
-<!--     <TextureView
-        android:id="@+id/texture_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        /> -->
-
-    <com.serenegiant.widget.UVCCameraTextureView
-        android:id="@+id/uvc_texture_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        />
-
-</merge>
+    <public name="Widget.CameraView" type="style"/>
+</resources>

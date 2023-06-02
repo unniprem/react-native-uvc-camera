@@ -14,11 +14,11 @@ import java.util.List;
  * Created by jgfidelis on 02/02/18.
  */
 
-public class UvcCameraPackage implements ReactPackage {
+public class RNCameraPackage implements ReactPackage {
     @Override
     public List<NativeModule> createNativeModules(ReactApplicationContext reactApplicationContext) {
         return Arrays.<NativeModule>asList(
-                new UvcCameraModule(reactApplicationContext)
+                new CameraModule(reactApplicationContext)
         );
     }
 
@@ -30,7 +30,7 @@ public class UvcCameraPackage implements ReactPackage {
     @Override
     public List<ViewManager> createViewManagers(ReactApplicationContext reactApplicationContext) {
         return Arrays.<ViewManager>asList(
-                new UvcCameraViewManager()
+                new CameraViewManager()
         );
     }
 }

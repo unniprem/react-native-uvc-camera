@@ -7,7 +7,7 @@ import android.graphics.Color;
 import android.media.CamcorderProfile;
 import android.media.MediaActionSound;
 import android.os.Build;
-import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
 import android.util.SparseArray;
 import android.view.View;
 import com.facebook.react.bridge.*;
@@ -33,7 +33,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class UvcCameraView extends CameraView implements LifecycleEventListener, BarCodeScannerAsyncTaskDelegate, FaceDetectorAsyncTaskDelegate,
+public class RNCameraView extends CameraView implements LifecycleEventListener, BarCodeScannerAsyncTaskDelegate, FaceDetectorAsyncTaskDelegate,
     BarcodeDetectorAsyncTaskDelegate, TextRecognizerAsyncTaskDelegate {
   private ThemedReactContext mThemedReactContext;
   private Queue<Promise> mPictureTakenPromises = new ConcurrentLinkedQueue<>();
@@ -66,7 +66,7 @@ public class UvcCameraView extends CameraView implements LifecycleEventListener,
   private int mFaceDetectionClassifications = RNFaceDetector.NO_CLASSIFICATIONS;
   private int mGoogleVisionBarCodeType = Barcode.ALL_FORMATS;
 
-  public UvcCameraView(ThemedReactContext themedReactContext) {
+  public RNCameraView(ThemedReactContext themedReactContext) {
     super(themedReactContext, true);
     mThemedReactContext = themedReactContext;
     themedReactContext.addLifecycleEventListener(this);
@@ -261,7 +261,7 @@ public class UvcCameraView extends CameraView implements LifecycleEventListener,
 
     if (mBarCodeTypes != null) {
       for (String code : mBarCodeTypes) {
-        String formatString = (String) UvcCameraModule.VALID_BARCODE_TYPES.get(code);
+        String formatString = (String) CameraModule.VALID_BARCODE_TYPES.get(code);
         if (formatString != null) {
           decodeFormats.add(BarcodeFormat.valueOf(code));
         }

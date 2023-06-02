@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class UvcCameraModule extends ReactContextBaseJavaModule {
+public class CameraModule extends ReactContextBaseJavaModule {
   private static final String TAG = "UvcCameraModule";
 
   private ScopedContext mScopedContext;
@@ -54,7 +54,7 @@ public class UvcCameraModule extends ReactContextBaseJavaModule {
         }
       });
 
-  public UvcCameraModule(ReactApplicationContext reactContext) {
+  public CameraModule(ReactApplicationContext reactContext) {
     super(reactContext);
     mScopedContext = new ScopedContext(reactContext);
   }
@@ -188,7 +188,7 @@ public class UvcCameraModule extends ReactContextBaseJavaModule {
     uiManager.addUIBlock(new UIBlock() {
       @Override
       public void execute(NativeViewHierarchyManager nativeViewHierarchyManager) {
-          UvcCameraView cameraView = (UvcCameraView) nativeViewHierarchyManager.resolveView(viewTag);
+          RNCameraView cameraView = (RNCameraView) nativeViewHierarchyManager.resolveView(viewTag);
           try {
             if (cameraView.isCameraOpened()) {
               cameraView.takePicture(options, promise, cacheDirectory);
@@ -211,10 +211,10 @@ public class UvcCameraModule extends ReactContextBaseJavaModule {
       uiManager.addUIBlock(new UIBlock() {
           @Override
           public void execute(NativeViewHierarchyManager nativeViewHierarchyManager) {
-              final UvcCameraView cameraView;
+              final RNCameraView cameraView;
 
               try {
-                  cameraView = (UvcCameraView) nativeViewHierarchyManager.resolveView(viewTag);
+                  cameraView = (RNCameraView) nativeViewHierarchyManager.resolveView(viewTag);
                   if (cameraView.isCameraOpened()) {
                       cameraView.record(options, promise, cacheDirectory);
                   } else {
@@ -234,10 +234,10 @@ public class UvcCameraModule extends ReactContextBaseJavaModule {
       uiManager.addUIBlock(new UIBlock() {
           @Override
           public void execute(NativeViewHierarchyManager nativeViewHierarchyManager) {
-              final UvcCameraView cameraView;
+              final RNCameraView cameraView;
 
               try {
-                  cameraView = (UvcCameraView) nativeViewHierarchyManager.resolveView(viewTag);
+                  cameraView = (RNCameraView) nativeViewHierarchyManager.resolveView(viewTag);
                   if (cameraView.isCameraOpened()) {
                       cameraView.stopRecording();
                   }
@@ -255,9 +255,9 @@ public class UvcCameraModule extends ReactContextBaseJavaModule {
       uiManager.addUIBlock(new UIBlock() {
           @Override
           public void execute(NativeViewHierarchyManager nativeViewHierarchyManager) {
-              final UvcCameraView cameraView;
+              final RNCameraView cameraView;
               try {
-                  cameraView = (UvcCameraView) nativeViewHierarchyManager.resolveView(viewTag);
+                  cameraView = (RNCameraView) nativeViewHierarchyManager.resolveView(viewTag);
                   WritableArray result = Arguments.createArray();
                   if (cameraView.isCameraOpened()) {
                       Set<AspectRatio> ratios = cameraView.getSupportedAspectRatios();

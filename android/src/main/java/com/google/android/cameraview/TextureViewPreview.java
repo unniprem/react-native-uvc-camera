@@ -21,48 +21,48 @@ import android.content.Context;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.view.Surface;
-import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import com.serenegiant.widget.UVCCameraTextureView;
+import com.serenegiant.widget.CameraViewInterface;
 
 import org.reactnative.camera.R;
 
 @TargetApi(14)
 class TextureViewPreview extends PreviewImpl {
 
-    private final TextureView mTextureView;
+    private final UVCCameraTextureView mTextureView;
 
     private int mDisplayOrientation;
 
     TextureViewPreview(Context context, ViewGroup parent) {
         final View view = View.inflate(context, R.layout.texture_view, parent);
-        mTextureView = (TextureView) view.findViewById(R.id.texture_view);
-        mTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+        mTextureView = (UVCCameraTextureView) view.findViewById(R.id.uvc_texture_view);
+        mTextureView.setCallback(new CameraViewInterface.Callback() {
 
             @Override
-            public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+            public void onSurfaceCreated(CameraViewInterface view, Surface surface, int width, int height) {
                 setSize(width, height);
                 configureTransform();
                 dispatchSurfaceChanged();
             }
 
             @Override
-            public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+            public void onSurfaceChanged(CameraViewInterface view, Surface surface, int width, int height) {
                 setSize(width, height);
                 configureTransform();
                 dispatchSurfaceChanged();
             }
 
             @Override
-            public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+            public void onSurfaceDestroy(CameraViewInterface view, Surface surface) {
                 setSize(0, 0);
                 dispatchSurfaceDestroyed();
-                return true;
             }
 
-            @Override
-            public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-            }
+            // @Override
+            // public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+            // }
         });
     }
 

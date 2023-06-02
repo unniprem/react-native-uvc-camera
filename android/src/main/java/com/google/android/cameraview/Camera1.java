@@ -22,7 +22,7 @@ import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Build;
-import android.support.v4.util.SparseArrayCompat;
+import androidx.collection.SparseArrayCompat;
 import android.view.SurfaceHolder;
 
 import java.io.File;
@@ -152,6 +152,11 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
             }
         }
         releaseCamera();
+    }
+
+    @Override
+    void destroy() {
+        // TODO
     }
 
     // Suppresses Camera#setPreviewTexture

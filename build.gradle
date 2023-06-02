@@ -25,10 +25,10 @@ allprojects {
 // }
 
 ext {
-	supportLibVersion = '27.1.1'  // variable that can be referenced to keep support libs consistent
+	supportLibVersion = '1.0.0'  // variable that can be referenced to keep support libs consistent
 	commonLibVersion= '4.1.1'
 	versionCompiler = 31
-	versionTarget = 27
+	versionTarget = 28
 	versionNameString = '1.0.0'
 	javaSourceCompatibility = JavaVersion.VERSION_1_8
 	javaTargetCompatibility = JavaVersion.VERSION_1_8

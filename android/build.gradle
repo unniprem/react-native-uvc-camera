@@ -2,9 +2,6 @@ buildscript {
   if (project == rootProject) {
     repositories {
       google()
-      maven {
-        url 'https://maven.google.com'
-      }
     }
 
     dependencies {
@@ -15,11 +12,11 @@ buildscript {
 
 apply plugin: 'com.android.library'
 
-def DEFAULT_COMPILE_SDK_VERSION             = 26
-def DEFAULT_BUILD_TOOLS_VERSION             = "26.0.2"
-def DEFAULT_TARGET_SDK_VERSION              = 26
+def DEFAULT_COMPILE_SDK_VERSION             = 28
+def DEFAULT_BUILD_TOOLS_VERSION             = "28.0.3"
+def DEFAULT_TARGET_SDK_VERSION              = 28
 def DEFAULT_GOOGLE_PLAY_SERVICES_VERSION    = "12.0.1"
-def DEFAULT_SUPPORT_LIBRARY_VERSION         = "27.1.0"
+def DEFAULT_SUPPORT_LIBRARY_VERSION         = "1.0.0"
 
 android {
   compileSdkVersion rootProject.hasProperty('compileSdkVersion') ? rootProject.compileSdkVersion : DEFAULT_COMPILE_SDK_VERSION
@@ -40,9 +37,7 @@ android {
 
 repositories {
   mavenCentral()
-  maven {
-   url 'https://maven.google.com'
-  }
+  mavenCentral()
   maven { url "https://jitpack.io" }
   maven {
     // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
@@ -58,14 +53,15 @@ dependencies {
   def googlePlayServicesVersion = rootProject.hasProperty('googlePlayServicesVersion')  ? rootProject.googlePlayServicesVersion : DEFAULT_GOOGLE_PLAY_SERVICES_VERSION
   def supportLibVersion = rootProject.hasProperty('supportLibVersion')  ? rootProject.supportLibVersion : DEFAULT_SUPPORT_LIBRARY_VERSION
 
-  compileOnly ('com.facebook.react:react-native:0.51.0') { force = true }
+  implementation 'com.facebook.react:react-native:+'
   // compileOnly 'com.facebook.infer.annotation:infer-annotation:+'
   implementation "com.google.zxing:core:3.2.1"
   implementation "com.drewnoakes:metadata-extractor:2.9.1"
   implementation "com.google.android.gms:play-services-vision:$googlePlayServicesVersion"
-  implementation "com.android.support:exifinterface:$supportLibVersion"
-  implementation "com.android.support:support-annotations:$supportLibVersion"
-  implementation "com.android.support:support-v4:$supportLibVersion"
+  implementation "androidx.exifinterface:exifinterface:$supportLibVersion"
+  implementation "androidx.annotation:annotation:$supportLibVersion"
+  implementation "androidx.legacy:legacy-support-v4:$supportLibVersion"
 
+  implementation project(':libuvccamera')
   implementation project(':usbCameraCommon')
 }
