@@ -1,4 +1,4 @@
-package com.serenegiant.usb;
+package com.serenegiant.usb_libuvccamera;
 
 import java.nio.ByteBuffer;
 

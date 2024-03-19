@@ -33,7 +33,7 @@ android {
 
     defaultConfig {
         applicationId "com.serenegiant.usbcameratest"
-        minSdkVersion 18
+        minSdkVersion 23
 		targetSdkVersion versionTarget
 		versionCode 8
 		versionName "3.00"
@@ -45,14 +45,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt'
         }
     }
+    namespace 'com.serenegiant.usbcameratest'
+    ndkVersion ndkVersion
 }
 
 dependencies {
 	api fileTree(dir: 'libs', include: ['*.jar'])
 
-	implementation "androidx.legacy:legacy-support-v4:${supportLibVersion}"
-	implementation "androidx.annotation:annotation:${supportLibVersion}"
+	implementation "com.android.support:support-v4:${supportLibVersion}"
+	implementation "com.android.support:support-annotations:${supportLibVersion}"
 
-	implementation "com.serenegiant:common:${commonLibVersion}"
+	implementation("com.serenegiant:common:${commonLibVersion}") {
+		exclude module: 'support-v4'
+	}
 	implementation project(':libuvccamera')
 }

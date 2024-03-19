@@ -35,11 +35,11 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.serenegiant.common.BaseActivity;
-import com.serenegiant.usb.CameraDialog;
-import com.serenegiant.usb.USBMonitor;
-import com.serenegiant.usb.USBMonitor.OnDeviceConnectListener;
-import com.serenegiant.usb.USBMonitor.UsbControlBlock;
-import com.serenegiant.usb.UVCCamera;
+import com.serenegiant.usb_libuvccamera.CameraDialog;
+import com.serenegiant.usb_libuvccamera.LibUVCCameraUSBMonitor;
+import com.serenegiant.usb_libuvccamera.LibUVCCameraUSBMonitor.OnDeviceConnectListener;
+import com.serenegiant.usb_libuvccamera.LibUVCCameraUSBMonitor.UsbControlBlock;
+import com.serenegiant.usb_libuvccamera.UVCCamera;
 
 public class MainActivity extends BaseActivity implements CameraDialog.CameraDialogParent {
 	private static final boolean DEBUG = true;	// TODO set false when production
@@ -47,7 +47,7 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
 
     private final Object mSync = new Object();
     // for accessing USB and USB camera
-    private USBMonitor mUSBMonitor;
+    private LibUVCCameraUSBMonitor mUSBMonitor;
 	private UVCCamera mUVCCamera;
 	private SurfaceView mUVCCameraView;
 	// for open&start / stop&close camera preview
@@ -65,13 +65,13 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
 		mUVCCameraView = (SurfaceView)findViewById(R.id.camera_surface_view);
 		mUVCCameraView.getHolder().addCallback(mSurfaceViewCallback);
 
-		mUSBMonitor = new USBMonitor(this, mOnDeviceConnectListener);
+		mUSBMonitor = new LibUVCCameraUSBMonitor(this, mOnDeviceConnectListener);
 	}
 
 	@Override
 	protected void onStart() {
 		super.onStart();
-		if (DEBUG) Log.v(TAG, "onStart:");
+		if (DEBUG) { Log.v(TAG, "onStart:"); }
 		synchronized (mSync) {
 			if (mUSBMonitor != null) {
 				mUSBMonitor.register();
@@ -81,7 +81,7 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
 
 	@Override
 	protected void onStop() {
-		if (DEBUG) Log.v(TAG, "onStop:");
+		if (DEBUG) { Log.v(TAG, "onStop:"); }
 		synchronized (mSync) {
 			if (mUSBMonitor != null) {
 				mUSBMonitor.unregister();
@@ -92,7 +92,7 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
 
 	@Override
 	protected void onDestroy() {
-		if (DEBUG) Log.v(TAG, "onDestroy:");
+		if (DEBUG) { Log.v(TAG, "onDestroy:"); }
 		synchronized (mSync) {
 			isActive = isPreview = false;
 			if (mUVCCamera != null) {
@@ -128,13 +128,13 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
 	private final OnDeviceConnectListener mOnDeviceConnectListener = new OnDeviceConnectListener() {
 		@Override
 		public void onAttach(final UsbDevice device) {
-			if (DEBUG) Log.v(TAG, "onAttach:");
+			if (DEBUG) { Log.v(TAG, "onAttach:"); }
 			Toast.makeText(MainActivity.this, "USB_DEVICE_ATTACHED", Toast.LENGTH_SHORT).show();
 		}
 
 		@Override
 		public void onConnect(final UsbDevice device, final UsbControlBlock ctrlBlock, final boolean createNew) {
-			if (DEBUG) Log.v(TAG, "onConnect:");
+			if (DEBUG) { Log.v(TAG, "onConnect:"); }
 			synchronized (mSync) {
 				if (mUVCCamera != null) {
 					mUVCCamera.destroy();
@@ -147,7 +147,7 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
 					synchronized (mSync) {
 						final UVCCamera camera = new UVCCamera();
 						camera.open(ctrlBlock);
-						if (DEBUG) Log.i(TAG, "supportedSize:" + camera.getSupportedSize());
+						if (DEBUG) { Log.i(TAG, "supportedSize:" + camera.getSupportedSize()); }
 						try {
 							camera.setPreviewSize(UVCCamera.DEFAULT_PREVIEW_WIDTH, UVCCamera.DEFAULT_PREVIEW_HEIGHT, UVCCamera.FRAME_FORMAT_MJPEG);
 						} catch (final IllegalArgumentException e) {
@@ -176,7 +176,7 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
 
 		@Override
 		public void onDisconnect(final UsbDevice device, final UsbControlBlock ctrlBlock) {
-			if (DEBUG) Log.v(TAG, "onDisconnect:");
+			if (DEBUG) { Log.v(TAG, "onDisconnect:"); }
 			// XXX you should check whether the comming device equal to camera device that currently using
 			queueEvent(new Runnable() {
 				@Override
@@ -197,7 +197,7 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
 
 		@Override
 		public void onDettach(final UsbDevice device) {
-			if (DEBUG) Log.v(TAG, "onDettach:");
+			if (DEBUG) { Log.v(TAG, "onDettach:"); }
 			Toast.makeText(MainActivity.this, "USB_DEVICE_DETACHED", Toast.LENGTH_SHORT).show();
 		}
 
@@ -211,7 +211,7 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
 	 * @return
 	 */
 	@Override
-	public USBMonitor getUSBMonitor() {
+	public LibUVCCameraUSBMonitor getUSBMonitor() {
 		return mUSBMonitor;
 	}
 
@@ -230,13 +230,13 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
 	private final SurfaceHolder.Callback mSurfaceViewCallback = new SurfaceHolder.Callback() {
 		@Override
 		public void surfaceCreated(final SurfaceHolder holder) {
-			if (DEBUG) Log.v(TAG, "surfaceCreated:");
+			if (DEBUG) { Log.v(TAG, "surfaceCreated:"); }
 		}
 
 		@Override
 		public void surfaceChanged(final SurfaceHolder holder, final int format, final int width, final int height) {
 			if ((width == 0) || (height == 0)) return;
-			if (DEBUG) Log.v(TAG, "surfaceChanged:");
+			if (DEBUG) { Log.v(TAG, "surfaceChanged:"); }
 			mPreviewSurface = holder.getSurface();
 			synchronized (mSync) {
 				if (isActive && !isPreview && (mUVCCamera != null)) {
@@ -249,7 +249,7 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
 
 		@Override
 		public void surfaceDestroyed(final SurfaceHolder holder) {
-			if (DEBUG) Log.v(TAG, "surfaceDestroyed:");
+			if (DEBUG) { Log.v(TAG, "surfaceDestroyed:"); }
 			synchronized (mSync) {
 				if (mUVCCamera != null) {
 					mUVCCamera.stopPreview();

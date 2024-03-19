@@ -40,7 +40,7 @@ public class SurfaceEncoder extends Encoder {
 	private static final int IFRAME_INTERVAL = 10;
 	private static final int FRAME_WIDTH = 640;
 	private static final int FRAME_HEIGHT = 480;
-	private static final int CAPTURE_FPS = 15;
+	private static final int CAPTURE_FPS = 30;
 	private static final int BIT_RATE = 1000000;
 
 	protected Surface mInputSurface;
@@ -59,7 +59,7 @@ public class SurfaceEncoder extends Encoder {
 
 	@Override
 	public void prepare() throws IOException {
-		if (DEBUG) Log.i(TAG, "prepare:");
+		if (DEBUG) { Log.i(TAG, "prepare:"); }
 		mTrackIndex = -1;
 		mMuxerStarted = false;
 		mIsCapturing = true;
@@ -70,7 +70,7 @@ public class SurfaceEncoder extends Encoder {
 			Log.e(TAG, "Unable to find an appropriate codec for " + MIME_TYPE);
 			return;
 		}
-		if (DEBUG) Log.i(TAG, "selected codec: " + codecInfo.getName());
+		if (DEBUG) { Log.i(TAG, "selected codec: " + codecInfo.getName()); }
 
 		mBufferInfo = new MediaCodec.BufferInfo();
 		final MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, FRAME_WIDTH, FRAME_HEIGHT);
@@ -81,7 +81,7 @@ public class SurfaceEncoder extends Encoder {
 		format.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE);
 		format.setInteger(MediaFormat.KEY_FRAME_RATE, CAPTURE_FPS);
 		format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
-		if (DEBUG) Log.i(TAG, "format: " + format);
+		if (DEBUG) { Log.i(TAG, "format: " + format); }
 
 		// create a MediaCodec encoder with specific configuration
 		mMediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
@@ -91,7 +91,7 @@ public class SurfaceEncoder extends Encoder {
 		mMediaCodec.start();
 
 		// create MediaMuxer. You should never call #start here
-		if (DEBUG) Log.i(TAG, "output will go to " + mOutputPath);
+		if (DEBUG) { Log.i(TAG, "output will go to " + mOutputPath); }
 		mMuxer = new MediaMuxer(mOutputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 
 		if (mEncodeListener != null) {
@@ -108,7 +108,7 @@ public class SurfaceEncoder extends Encoder {
 	*/
 	@Override
 	protected void release() {
-		if (DEBUG) Log.i(TAG, "release:");
+		if (DEBUG) { Log.i(TAG, "release:"); }
 		super.release();
 		if (mInputSurface != null) {
 			mInputSurface.release();

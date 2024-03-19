@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import android.annotation.SuppressLint;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaCodec;
@@ -54,7 +55,7 @@ public class MediaAudioEncoder extends MediaEncoder implements IAudioEncoder {
 
 	@Override
 	protected void prepare() throws IOException {
-		if (DEBUG) Log.v(TAG, "prepare:");
+		if (DEBUG) { Log.v(TAG, "prepare:"); }
         mTrackIndex = -1;
         mMuxerStarted = mIsEOS = false;
         // prepare MediaCodec for AAC encoding of audio data from inernal mic.
@@ -113,7 +114,8 @@ public class MediaAudioEncoder extends MediaEncoder implements IAudioEncoder {
 	 * and write them to the MediaCodec encoder
 	 */
     private class AudioThread extends Thread {
-    	@Override
+    	@SuppressLint("MissingPermission")
+		@Override
     	public void run() {
 			android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO); // THREAD_PRIORITY_URGENT_AUDIO
 			int cnt = 0;
@@ -126,8 +128,7 @@ public class MediaAudioEncoder extends MediaEncoder implements IAudioEncoder {
 			AudioRecord audioRecord = null;
 			for (final int src: AUDIO_SOURCES) {
 				try {
-					audioRecord = new AudioRecord(src,
-						SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, buffer_size);
+					audioRecord = new AudioRecord(src, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, buffer_size);
 					if (audioRecord != null) {
 						if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
 							audioRecord.release();
@@ -218,7 +219,7 @@ LOOP:	for (int i = 0; i < numCodecs; i++) {
             }
             final String[] types = codecInfo.getSupportedTypes();
             for (int j = 0; j < types.length; j++) {
-            	if (DEBUG) Log.i(TAG, "supportedType:" + codecInfo.getName() + ",MIME=" + types[j]);
+            	if (DEBUG) { Log.i(TAG, "supportedType:" + codecInfo.getName() + ",MIME=" + types[j]); }
                 if (types[j].equalsIgnoreCase(mimeType)) {
                 	if (result == null) {
                 		result = codecInfo;

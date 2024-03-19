@@ -24,19 +24,20 @@
 package com.serenegiant.common;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
+import androidx.fragment.app.FragmentActivity;
+
 import android.util.Log;
 import android.widget.Toast;
 
-import com.serenegiant.dialog.MessageDialogFragment;
-import com.serenegiant.utils.BuildCheck;
+import com.serenegiant.dialog.MessageDialogFragmentV4;
 import com.serenegiant.utils.HandlerThreadHandler;
 import com.serenegiant.utils.PermissionCheck;
 
@@ -45,15 +46,15 @@ import com.serenegiant.utils.PermissionCheck;
  *
  */
 public class BaseFragment extends Fragment
-	implements MessageDialogFragment.MessageDialogListener {
+	implements MessageDialogFragmentV4.MessageDialogListener {
 
-	private static boolean DEBUG = false;	// FIXME 実働時はfalseにセットすること
+	private static boolean DEBUG = false;	// FIXME 在生产期间设置为false
 	private static final String TAG = BaseFragment.class.getSimpleName();
 
-	/** UI操作のためのHandler */
+	/** UI操作的处理程序 */
 	private final Handler mUIHandler = new Handler(Looper.getMainLooper());
 	private final Thread mUiThread = mUIHandler.getLooper().getThread();
-	/** ワーカースレッド上で処理するためのHandler */
+	/** 在工作线程上处理的处理程序 */
 	private Handler mWorkerHandler;
 	private long mWorkerThreadID = -1;
 
@@ -64,7 +65,7 @@ public class BaseFragment extends Fragment
 	@Override
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		// ワーカースレッドを生成
+		// 生成工作者线程
 		if (mWorkerHandler == null) {
 			mWorkerHandler = HandlerThreadHandler.createHandler(TAG);
 			mWorkerThreadID = mWorkerHandler.getLooper().getThread().getId();
@@ -79,7 +80,7 @@ public class BaseFragment extends Fragment
 
 	@Override
 	public synchronized void onDestroy() {
-		// ワーカースレッドを破棄
+		// 销毁工作线程
 		if (mWorkerHandler != null) {
 			try {
 				mWorkerHandler.getLooper().quit();
@@ -93,7 +94,7 @@ public class BaseFragment extends Fragment
 
 //================================================================================
 	/**
-	 * UIスレッドでRunnableを実行するためのヘルパーメソッド
+	 * 在UI线程上运行Runnable的辅助方法
 	 * @param task
 	 * @param duration
 	 */
@@ -112,7 +113,7 @@ public class BaseFragment extends Fragment
 	}
 
 	/**
-	 * UIスレッド上で指定したRunnableが実行待ちしていれば実行待ちを解除する
+	 * 如果UI线程上指定的Runnable正在等待执行，请释放执行等待
 	 * @param task
 	 */
 	public final void removeFromUiThread(final Runnable task) {
@@ -121,8 +122,8 @@ public class BaseFragment extends Fragment
 	}
 
 	/**
-	 * ワーカースレッド上で指定したRunnableを実行する
-	 * 未実行の同じRunnableがあればキャンセルされる(後から指定した方のみ実行される)
+	 * 在工作线程上执行指定的Runnable
+	 * 如果没有相同的Runnable尚未执行，它将被取消（仅执行稍后指定的那个）。
 	 * @param task
 	 * @param delayMillis
 	 */
@@ -143,7 +144,7 @@ public class BaseFragment extends Fragment
 	}
 
 	/**
-	 * 指定したRunnableをワーカースレッド上で実行予定であればキャンセルする
+	 * 如果要在工作线程上执行，请取消指定的Runnable
 	 * @param task
 	 */
 	protected final synchronized void removeEvent(final Runnable task) {
@@ -158,7 +159,7 @@ public class BaseFragment extends Fragment
 //================================================================================
 	private Toast mToast;
 	/**
-	 * Toastでメッセージを表示
+	 * 查看带有Toast的消息
 	 * @param msg
 	 */
 	protected void showToast(@StringRes final int msg, final Object... args) {
@@ -168,7 +169,7 @@ public class BaseFragment extends Fragment
 	}
 
 	/**
-	 * Toastが表示されていればキャンセルする
+	 * 如果显示Toast，则取消
 	 */
 	protected void clearToast() {
 		removeFromUiThread(mShowToastTask);
@@ -184,6 +185,10 @@ public class BaseFragment extends Fragment
 	}
 
 	private ShowToastTask mShowToastTask;
+
+	@Override
+	public void onMessageDialogResult(@NonNull MessageDialogFragmentV4 messageDialogFragmentV4, int i, @NonNull String[] strings, boolean b) {}
+
 	private final class ShowToastTask implements Runnable {
 		final int msg;
 		final Object args;
@@ -213,38 +218,17 @@ public class BaseFragment extends Fragment
 	}
 
 //================================================================================
-	/**
-	 * MessageDialogFragmentメッセージダイアログからのコールバックリスナー
-	 * @param dialog
-	 * @param requestCode
-	 * @param permissions
-	 * @param result
-	 */
-	@SuppressLint("NewApi")
-	@Override
-	public void onMessageDialogResult(final MessageDialogFragment dialog, final int requestCode, final String[] permissions, final boolean result) {
-		if (result) {
-			// メッセージダイアログでOKを押された時はパーミッション要求する
-			if (BuildCheck.isMarshmallow()) {
-				requestPermissions(permissions, requestCode);
-				return;
-			}
-		}
-		// メッセージダイアログでキャンセルされた時とAndroid6でない時は自前でチェックして#checkPermissionResultを呼び出す
-		for (final String permission: permissions) {
-			checkPermissionResult(requestCode, permission, PermissionCheck.hasPermission(getActivity(), permission));
-		}
-	}
+
 
 	/**
-	 * パーミッション要求結果を受け取るためのメソッド
+	 * 接收许可请求结果的方法
 	 * @param requestCode
 	 * @param permissions
 	 * @param grantResults
 	 */
 	@Override
 	public void onRequestPermissionsResult(final int requestCode, @NonNull final String[] permissions, @NonNull final int[] grantResults) {
-		super.onRequestPermissionsResult(requestCode, permissions, grantResults);	// 何もしてないけど一応呼んどく
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);	// 我什么都没做，只是打电话给我
 		final int n = Math.min(permissions.length, grantResults.length);
 		for (int i = 0; i < n; i++) {
 			checkPermissionResult(requestCode, permissions[i], grantResults[i] == PackageManager.PERMISSION_GRANTED);
@@ -252,14 +236,14 @@ public class BaseFragment extends Fragment
 	}
 
 	/**
-	 * パーミッション要求の結果をチェック
-	 * ここではパーミッションを取得できなかった時にToastでメッセージ表示するだけ
+	 * 检查许可请求的结果
+	 * 在这里，当无法获得许可时，在Toast中显示一条消息
 	 * @param requestCode
 	 * @param permission
 	 * @param result
 	 */
 	protected void checkPermissionResult(final int requestCode, final String permission, final boolean result) {
-		// パーミッションがないときにはメッセージを表示する
+		// 没有权限时显示一条消息
 		if (!result && (permission != null)) {
 			if (Manifest.permission.RECORD_AUDIO.equals(permission)) {
 				showToast(com.serenegiant.common.R.string.permission_audio);
@@ -273,20 +257,21 @@ public class BaseFragment extends Fragment
 		}
 	}
 
-	// 動的パーミッション要求時の要求コード
+	// 动态权限请求的请求代码
 	protected static final int REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE = 0x12345;
 	protected static final int REQUEST_PERMISSION_AUDIO_RECORDING = 0x234567;
 	protected static final int REQUEST_PERMISSION_NETWORK = 0x345678;
 	protected static final int REQUEST_PERMISSION_CAMERA = 0x537642;
 
 	/**
-	 * 外部ストレージへの書き込みパーミッションが有るかどうかをチェック
-	 * なければ説明ダイアログを表示する
-	 * @return true 外部ストレージへの書き込みパーミッションが有る
+	 * 检查您是否具有对外部存储的写入权限
+	 * 如果没有，显示说明对话框
+	 * @return true 拥有对外部存储的写入权限
 	 */
 	protected boolean checkPermissionWriteExternalStorage() {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) return true;
 		if (!PermissionCheck.hasWriteExternalStorage(getActivity())) {
-			MessageDialogFragment.showDialog(this, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE,
+			MessageDialogFragmentV4.showDialog((FragmentActivity) getActivity(), REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE,
 				com.serenegiant.common.R.string.permission_title, com.serenegiant.common.R.string.permission_ext_storage_request,
 				new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE});
 			return false;
@@ -295,13 +280,13 @@ public class BaseFragment extends Fragment
 	}
 
 	/**
-	 * 録音のパーミッションが有るかどうかをチェック
-	 * なければ説明ダイアログを表示する
-	 * @return true 録音のパーミッションが有る
+	 * 检查您是否有录音权限
+	 * 如果没有，显示说明对话框
+	 * @return true 有录音权限
 	 */
 	protected boolean checkPermissionAudio() {
 		if (!PermissionCheck.hasAudio(getActivity())) {
-			MessageDialogFragment.showDialog(this, REQUEST_PERMISSION_AUDIO_RECORDING,
+			MessageDialogFragmentV4.showDialog((FragmentActivity) getActivity(), REQUEST_PERMISSION_AUDIO_RECORDING,
 				com.serenegiant.common.R.string.permission_title, com.serenegiant.common.R.string.permission_audio_recording_request,
 				new String[]{Manifest.permission.RECORD_AUDIO});
 			return false;
@@ -310,13 +295,13 @@ public class BaseFragment extends Fragment
 	}
 
 	/**
-	 * ネットワークアクセスのパーミッションが有るかどうかをチェック
-	 * なければ説明ダイアログを表示する
-	 * @return true ネットワークアクセスのパーミッションが有る
+	 * 检查您是否具有网络访问权限
+	 * 如果没有，显示说明对话框
+	 * @return true 具有网络访问权限
 	 */
 	protected boolean checkPermissionNetwork() {
 		if (!PermissionCheck.hasNetwork(getActivity())) {
-			MessageDialogFragment.showDialog(this, REQUEST_PERMISSION_NETWORK,
+			MessageDialogFragmentV4.showDialog((FragmentActivity) getActivity(), REQUEST_PERMISSION_NETWORK,
 				com.serenegiant.common.R.string.permission_title, com.serenegiant.common.R.string.permission_network_request,
 				new String[]{Manifest.permission.INTERNET});
 			return false;
@@ -325,13 +310,13 @@ public class BaseFragment extends Fragment
 	}
 
 	/**
-	 * カメラアクセスのパーミッションがあるかどうかをチェック
-	 * なければ説明ダイアログを表示する
-	 * @return true カメラアクセスのパーミッションが有る
+	 * 检查您是否具有摄像头访问权限
+	 * 如果没有，显示说明对话框
+	 * @return true 具有摄像头访问权限
 	 */
 	protected boolean checkPermissionCamera() {
 		if (!PermissionCheck.hasCamera(getActivity())) {
-			MessageDialogFragment.showDialog(this, REQUEST_PERMISSION_CAMERA,
+			MessageDialogFragmentV4.showDialog((FragmentActivity) getActivity(), REQUEST_PERMISSION_CAMERA,
 				com.serenegiant.common.R.string.permission_title, com.serenegiant.common.R.string.permission_camera_request,
 				new String[]{Manifest.permission.CAMERA});
 			return false;

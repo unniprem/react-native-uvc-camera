@@ -47,11 +47,11 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.serenegiant.common.BaseActivity;
-import com.serenegiant.usb.CameraDialog;
-import com.serenegiant.usb.USBMonitor;
-import com.serenegiant.usb.USBMonitor.OnDeviceConnectListener;
-import com.serenegiant.usb.USBMonitor.UsbControlBlock;
-import com.serenegiant.usb.UVCCamera;
+import com.serenegiant.usb_libuvccamera.CameraDialog;
+import com.serenegiant.usb_libuvccamera.LibUVCCameraUSBMonitor;
+import com.serenegiant.usb_libuvccamera.LibUVCCameraUSBMonitor.OnDeviceConnectListener;
+import com.serenegiant.usb_libuvccamera.LibUVCCameraUSBMonitor.UsbControlBlock;
+import com.serenegiant.usb_libuvccamera.UVCCamera;
 import com.serenegiant.video.Encoder;
 import com.serenegiant.video.Encoder.EncodeListener;
 import com.serenegiant.video.SurfaceEncoder;
@@ -67,7 +67,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
 	private final Object mSync = new Object();
     // for accessing USB and USB camera
-    private USBMonitor mUSBMonitor;
+    private LibUVCCameraUSBMonitor mUSBMonitor;
 	private UVCCamera mUVCCamera;
 	private SimpleUVCCameraTextureView mUVCCameraView;
 	// for open&start / stop&close camera preview
@@ -94,7 +94,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 		mUVCCameraView.setAspectRatio(UVCCamera.DEFAULT_PREVIEW_WIDTH / (float)UVCCamera.DEFAULT_PREVIEW_HEIGHT);
 		mUVCCameraView.setSurfaceTextureListener(mSurfaceTextureListener);
 
-		mUSBMonitor = new USBMonitor(this, mOnDeviceConnectListener);
+		mUSBMonitor = new LibUVCCameraUSBMonitor(this, mOnDeviceConnectListener);
 	}
 
 	@Override
@@ -189,7 +189,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 				public void run() {
 					final UVCCamera camera = new UVCCamera();
 					camera.open(ctrlBlock);
-					if (DEBUG) Log.i(TAG, "supportedSize:" + camera.getSupportedSize());
+					if (DEBUG) { Log.i(TAG, "supportedSize:" + camera.getSupportedSize()); }
 					if (mPreviewSurface != null) {
 						mPreviewSurface.release();
 						mPreviewSurface = null;
@@ -254,7 +254,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 	 * @return
 	 */
 	@Override
-	public USBMonitor getUSBMonitor() {
+	public LibUVCCameraUSBMonitor getUSBMonitor() {
 		return mUSBMonitor;
 	}
 
@@ -317,7 +317,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 	 * start capturing
 	 */
 	private final void startCapture() {
-		if (DEBUG) Log.v(TAG, "startCapture:");
+		if (DEBUG) { Log.v(TAG, "startCapture:"); }
 		if (mEncoder == null && (mCaptureState == CAPTURE_STOP)) {
 			mCaptureState = CAPTURE_PREPARE;
 			queueEvent(new Runnable() {
@@ -345,7 +345,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 	 * stop capture if capturing
 	 */
 	private final void stopCapture() {
-		if (DEBUG) Log.v(TAG, "stopCapture:");
+		if (DEBUG) { Log.v(TAG, "stopCapture:"); }
 		queueEvent(new Runnable() {
 			@Override
 			public void run() {
@@ -368,7 +368,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     private final EncodeListener mEncodeListener = new EncodeListener() {
 		@Override
 		public void onPreapared(final Encoder encoder) {
-			if (DEBUG) Log.v(TAG, "onPreapared:");
+			if (DEBUG) { Log.v(TAG, "onPreapared:"); }
 			synchronized (mSync) {
 				if (mUVCCamera != null) {
 					mUVCCamera.startCapture(((SurfaceEncoder)encoder).getInputSurface());
@@ -379,7 +379,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
 		@Override
 		public void onRelease(final Encoder encoder) {
-			if (DEBUG) Log.v(TAG, "onRelease:");
+			if (DEBUG) { Log.v(TAG, "onRelease:"); }
 			synchronized (mSync) {
 				if (mUVCCamera != null) {
 					mUVCCamera.stopCapture();

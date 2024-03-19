@@ -27,7 +27,7 @@ import android.app.Activity;
 import android.view.Surface;
 
 import com.serenegiant.glutils.RendererHolder;
-import com.serenegiant.usb.UVCCamera;
+import com.serenegiant.usb_libuvccamera.UVCCamera;
 import com.serenegiant.widget.CameraViewInterface;
 
 import java.io.FileNotFoundException;
@@ -172,12 +172,9 @@ public class UVCCameraHandlerMultiSurface extends AbstractUVCCameraHandler {
 			public void run() {
 				synchronized (UVCCameraHandlerMultiSurface.this) {
 					if (mRendererHolder != null) {
-						try {
-							mRendererHolder.captureStill(path);
-							updateMedia(path);
-						} catch (FileNotFoundException e) {
-							e.printStackTrace();
-						}
+						try { mRendererHolder.captureStill(path); }
+						catch (FileNotFoundException e) { e.printStackTrace(); }
+						updateMedia(path);
 					}
 				}
 			}

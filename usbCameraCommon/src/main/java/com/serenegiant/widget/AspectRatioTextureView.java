@@ -34,7 +34,7 @@ import android.view.TextureView;
  * XXX it is better that can set the aspect ratio as xml property
  */
 public class AspectRatioTextureView extends TextureView	// API >= 14
-	implements IAspectRatioView {
+	implements IScaledView {
 
 	private static final boolean DEBUG = true;	// TODO set false on release
 	private static final String TAG = "AbstractCameraView";
@@ -55,25 +55,37 @@ public class AspectRatioTextureView extends TextureView	// API >= 14
 	}
 
 	@Override
-    public void setAspectRatio(final double aspectRatio) {
-        if (aspectRatio < 0) {
-            throw new IllegalArgumentException();
-        }
-        if (mRequestedAspect != aspectRatio) {
-            mRequestedAspect = aspectRatio;
-            requestLayout();
-        }
-    }
+	public void setScaleMode(int i) {
 
-	@Override
-    public void setAspectRatio(final int width, final int height) {
-		setAspectRatio(width / (double)height);
-    }
-
-	@Override
-	public double getAspectRatio() {
-		return mRequestedAspect;
 	}
+
+	@Override
+	public int getScaleMode() {
+		return SCALE_MODE_KEEP_ASPECT;
+	}
+
+
+//
+//	@Override
+//    public void setAspectRatio(final double aspectRatio) {
+//        if (aspectRatio < 0) {
+//            throw new IllegalArgumentException();
+//        }
+//        if (mRequestedAspect != aspectRatio) {
+//            mRequestedAspect = aspectRatio;
+//            requestLayout();
+//        }
+//    }
+//
+//	@Override
+//    public void setAspectRatio(final int width, final int height) {
+//		setAspectRatio(width / (double)height);
+//    }
+//
+//	@Override
+//	public double getAspectRatio() {
+//		return mRequestedAspect;
+//	}
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {

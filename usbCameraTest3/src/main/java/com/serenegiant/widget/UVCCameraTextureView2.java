@@ -70,26 +70,26 @@ public class UVCCameraTextureView2 extends TextureView	// API >= 14
 	public void onPause() {
 	}
 
-	@Override
-    public void setAspectRatio(final double aspectRatio) {
-        if (aspectRatio < 0) {
-            throw new IllegalArgumentException();
-        }
-        if (mRequestedAspect != aspectRatio) {
-            mRequestedAspect = aspectRatio;
-            requestLayout();
-        }
-    }
-
-	@Override
-    public void setAspectRatio(final int width, final int height) {
-		setAspectRatio(width / (double)height);
-    }
-
-	@Override
-	public double getAspectRatio() {
-		return mRequestedAspect;
-	}
+//	@Override
+//    public void setAspectRatio(final double aspectRatio) {
+//        if (aspectRatio < 0) {
+//            throw new IllegalArgumentException();
+//        }
+//        if (mRequestedAspect != aspectRatio) {
+//            mRequestedAspect = aspectRatio;
+//            requestLayout();
+//        }
+//    }
+//
+//	@Override
+//    public void setAspectRatio(final int width, final int height) {
+//		setAspectRatio(width / (double)height);
+//    }
+//
+//	@Override
+//	public double getAspectRatio() {
+//		return mRequestedAspect;
+//	}
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -170,4 +170,13 @@ public class UVCCameraTextureView2 extends TextureView	// API >= 14
 		return null;
 	}
 
+	@Override
+	public void setScaleMode(int i) {
+
+	}
+
+	@Override
+	public int getScaleMode() {
+		return IScaledView.SCALE_MODE_KEEP_ASPECT;
+	}
 }

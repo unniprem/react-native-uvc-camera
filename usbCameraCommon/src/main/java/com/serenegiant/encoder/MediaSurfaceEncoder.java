@@ -39,14 +39,14 @@ public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
 	private static final String MIME_TYPE = "video/avc";
 	// parameters for recording
 	private final int mWidth, mHeight;
-    private static final int FRAME_RATE = 15;
+    private static final int FRAME_RATE = 30;
     private static final float BPP = 0.50f;
 
     private Surface mSurface;
 
 	public MediaSurfaceEncoder(final MediaMuxerWrapper muxer, final int width, final int height, final MediaEncoderListener listener) {
 		super(muxer, listener);
-		if (DEBUG) Log.i(TAG, "MediaVideoEncoder: ");
+		if (DEBUG) { Log.i(TAG, "MediaVideoEncoder: "); }
 		mWidth = width;
 		mHeight = height;
 	}
@@ -60,7 +60,7 @@ public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
 
 	@Override
 	protected void prepare() throws IOException {
-		if (DEBUG) Log.i(TAG, "prepare: ");
+		if (DEBUG) { Log.i(TAG, "prepare: "); }
         mTrackIndex = -1;
         mMuxerStarted = mIsEOS = false;
 
@@ -69,14 +69,14 @@ public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
             Log.e(TAG, "Unable to find an appropriate codec for " + MIME_TYPE);
             return;
         }
-		if (DEBUG) Log.i(TAG, "selected codec: " + videoCodecInfo.getName());
+		if (DEBUG) { Log.i(TAG, "selected codec: " + videoCodecInfo.getName()); }
 
         final MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, mWidth, mHeight);
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);	// API >= 18
         format.setInteger(MediaFormat.KEY_BIT_RATE, calcBitRate());
         format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 10);
-		if (DEBUG) Log.i(TAG, "format: " + format);
+		if (DEBUG) { Log.i(TAG, "format: " + format); }
 
         mMediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
         mMediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
@@ -84,7 +84,7 @@ public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
         // this method only can call between #configure and #start
         mSurface = mMediaCodec.createInputSurface();	// API >= 18
         mMediaCodec.start();
-        if (DEBUG) Log.i(TAG, "prepare finishing");
+        if (DEBUG) { Log.i(TAG, "prepare finishing"); }
         if (mListener != null) {
         	try {
         		mListener.onPrepared(this);
@@ -96,7 +96,7 @@ public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
 
 	@Override
     protected void release() {
-		if (DEBUG) Log.i(TAG, "release:");
+		if (DEBUG) { Log.i(TAG, "release:"); }
 		if (mSurface != null) {
 			mSurface.release();
 			mSurface = null;
@@ -116,7 +116,7 @@ public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
      * @return null if no codec matched
      */
     protected static final MediaCodecInfo selectVideoCodec(final String mimeType) {
-    	if (DEBUG) Log.v(TAG, "selectVideoCodec:");
+    	if (DEBUG) { Log.v(TAG, "selectVideoCodec:"); }
 
     	// get the list of available codecs
         final int numCodecs = MediaCodecList.getCodecCount();
@@ -130,7 +130,7 @@ public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
             final String[] types = codecInfo.getSupportedTypes();
             for (int j = 0; j < types.length; j++) {
                 if (types[j].equalsIgnoreCase(mimeType)) {
-                	if (DEBUG) Log.i(TAG, "codec:" + codecInfo.getName() + ",MIME=" + types[j]);
+                	if (DEBUG) { Log.i(TAG, "codec:" + codecInfo.getName() + ",MIME=" + types[j]); }
             		final int format = selectColorFormat(codecInfo, mimeType);
                 	if (format > 0) {
                 		return codecInfo;
@@ -146,7 +146,7 @@ public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
      * @return 0 if no colorFormat is matched
      */
     protected static final int selectColorFormat(final MediaCodecInfo codecInfo, final String mimeType) {
-		if (DEBUG) Log.i(TAG, "selectColorFormat: ");
+		if (DEBUG) { Log.i(TAG, "selectColorFormat: "); }
     	int result = 0;
     	final MediaCodecInfo.CodecCapabilities caps;
     	try {
@@ -159,7 +159,7 @@ public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
         for (int i = 0; i < caps.colorFormats.length; i++) {
         	colorFormat = caps.colorFormats[i];
             if (isRecognizedVideoFormat(colorFormat)) {
-            	if (result == 0)
+            	// if (result == 0) // FIXME: Why was this if check set? Lint gave error "Condition 'result == 0' is always 'true' "
             		result = colorFormat;
                 break;
             }
@@ -183,7 +183,7 @@ public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
 	}
 
     private static final boolean isRecognizedVideoFormat(final int colorFormat) {
-		if (DEBUG) Log.i(TAG, "isRecognizedVideoFormat:colorFormat=" + colorFormat);
+		if (DEBUG) { Log.i(TAG, "isRecognizedVideoFormat:colorFormat=" + colorFormat); }
     	final int n = recognizedFormats != null ? recognizedFormats.length : 0;
     	for (int i = 0; i < n; i++) {
     		if (recognizedFormats[i] == colorFormat) {

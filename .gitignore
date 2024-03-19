@@ -70,3 +70,10 @@ profiles_settings.xml
 libuvccamera/src/main/libs
 .idea/copyright
 .idea/scopes
+.idea/caches
+.idea/codeStyles
+.idea/*
+*.iml
+.DS_Store
+libuvccamera/.externalNativeBuild/*
+

@@ -26,6 +26,7 @@ package com.serenegiant.common;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -36,7 +37,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.serenegiant.dialog.MessageDialogFragmentV4;
-import com.serenegiant.utils.BuildCheck;
 import com.serenegiant.utils.HandlerThreadHandler;
 import com.serenegiant.utils.PermissionCheck;
 
@@ -44,31 +44,27 @@ import com.serenegiant.utils.PermissionCheck;
  * Created by saki on 2016/11/18.
  */
 public class BaseActivity extends AppCompatActivity
-        implements MessageDialogFragmentV4.MessageDialogListener {
+	implements MessageDialogFragmentV4.MessageDialogListener {
 
-    private static boolean DEBUG = false;    // FIXME 実働時はfalseにセットすること
-    private static final String TAG = BaseActivity.class.getSimpleName();
+	private static boolean DEBUG = false;	// FIXME 在生产期间设置为false
+	private static final String TAG = BaseActivity.class.getSimpleName();
 
-    /**
-     * UI操作のためのHandler
-     */
-    private final Handler mUIHandler = new Handler(Looper.getMainLooper());
-    private final Thread mUiThread = mUIHandler.getLooper().getThread();
-    /**
-     * ワーカースレッド上で処理するためのHandler
-     */
-    private Handler mWorkerHandler;
-    private long mWorkerThreadID = -1;
+	/** UI操作的处理程序 */
+	private final Handler mUIHandler = new Handler(Looper.getMainLooper());
+	private final Thread mUiThread = mUIHandler.getLooper().getThread();
+	/** 在工作线程上处理的处理程序 */
+	private Handler mWorkerHandler;
+	private long mWorkerThreadID = -1;
 
-    @Override
-    protected void onCreate(final Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        // ワーカースレッドを生成
-        if (mWorkerHandler == null) {
-            mWorkerHandler = HandlerThreadHandler.createHandler(TAG);
-            mWorkerThreadID = mWorkerHandler.getLooper().getThread().getId();
-        }
-    }
+	@Override
+	protected void onCreate(final Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		// 生成工作者线程
+		if (mWorkerHandler == null) {
+			mWorkerHandler = HandlerThreadHandler.createHandler(TAG);
+			mWorkerThreadID = mWorkerHandler.getLooper().getThread().getId();
+		}
+	}
 
     @Override
     protected void onPause() {
@@ -76,171 +72,111 @@ public class BaseActivity extends AppCompatActivity
         super.onPause();
     }
 
-    @Override
-    protected synchronized void onDestroy() {
-        // ワーカースレッドを破棄
-        if (mWorkerHandler != null) {
-            try {
-                mWorkerHandler.getLooper().quit();
-            } catch (final Exception e) {
-                //
-            }
-            mWorkerHandler = null;
-        }
-        super.onDestroy();
-    }
+	@Override
+	protected synchronized void onDestroy() {
+		// 销毁工作线程
+		if (mWorkerHandler != null) {
+			try {
+				mWorkerHandler.getLooper().quit();
+			} catch (final Exception e) {
+				//
+			}
+			mWorkerHandler = null;
+		}
+		super.onDestroy();
+	}
 
 //================================================================================
+	/**
+	 * 在UI线程上运行Runnable的辅助方法
+	 * @param task
+	 * @param duration
+	 */
+	public final void runOnUiThread(final Runnable task, final long duration) {
+		if (task == null) return;
+		mUIHandler.removeCallbacks(task);
+		if ((duration > 0) || Thread.currentThread() != mUiThread) {
+			mUIHandler.postDelayed(task, duration);
+		} else {
+			try {
+				task.run();
+			} catch (final Exception e) {
+				Log.w(TAG, e);
+			}
+		}
+	}
 
-    /**
-     * UIスレッドでRunnableを実行するためのヘルパーメソッド
-     *
-     * @param task
-     * @param duration
-     */
-    public final void runOnUiThread(final Runnable task, final long duration) {
-        if (task == null) return;
-        mUIHandler.removeCallbacks(task);
-        if ((duration > 0) || Thread.currentThread() != mUiThread) {
-            mUIHandler.postDelayed(task, duration);
-        } else {
-            try {
-                task.run();
-            } catch (final Exception e) {
-                Log.w(TAG, e);
-            }
-        }
-    }
+	/**
+	 * 如果UI线程上指定的Runnable正在等待执行，请释放执行等待
+	 * @param task
+	 */
+	public final void removeFromUiThread(final Runnable task) {
+		if (task == null) return;
+		mUIHandler.removeCallbacks(task);
+	}
 
-    /**
-     * UIスレッド上で指定したRunnableが実行待ちしていれば実行待ちを解除する
-     *
-     * @param task
-     */
-    public final void removeFromUiThread(final Runnable task) {
-        if (task == null) return;
-        mUIHandler.removeCallbacks(task);
-    }
+	/**
+	 * 在工作线程上执行指定的Runnable
+	 * 如果没有相同的Runnable尚未执行，它将被取消（仅执行稍后指定的那个）。
+	 * @param task
+	 * @param delayMillis
+	 */
+	protected final synchronized void queueEvent(final Runnable task, final long delayMillis) {
+		if ((task == null) || (mWorkerHandler == null)) return;
+		try {
+			mWorkerHandler.removeCallbacks(task);
+			if (delayMillis > 0) {
+				mWorkerHandler.postDelayed(task, delayMillis);
+			} else if (mWorkerThreadID == Thread.currentThread().getId()) {
+				task.run();
+			} else {
+				mWorkerHandler.post(task);
+			}
+		} catch (final Exception e) {
+			// ignore
+		}
+	}
 
-    /**
-     * ワーカースレッド上で指定したRunnableを実行する
-     * 未実行の同じRunnableがあればキャンセルされる(後から指定した方のみ実行される)
-     *
-     * @param task
-     * @param delayMillis
-     */
-    protected final synchronized void queueEvent(final Runnable task, final long delayMillis) {
-        if ((task == null) || (mWorkerHandler == null)) return;
-        try {
-            mWorkerHandler.removeCallbacks(task);
-            if (delayMillis > 0) {
-                mWorkerHandler.postDelayed(task, delayMillis);
-            } else if (mWorkerThreadID == Thread.currentThread().getId()) {
-                task.run();
-            } else {
-                mWorkerHandler.post(task);
-            }
-        } catch (final Exception e) {
-            // ignore
-        }
-    }
-
-    /**
-     * 指定したRunnableをワーカースレッド上で実行予定であればキャンセルする
-     *
-     * @param task
-     */
-    protected final synchronized void removeEvent(final Runnable task) {
-        if (task == null) return;
-        try {
-            mWorkerHandler.removeCallbacks(task);
-        } catch (final Exception e) {
-            // ignore
-        }
-    }
-
-    //================================================================================
-    private Toast mToast;
-
-    /**
-     * Toastでメッセージを表示
-     *
-     * @param msg
-     */
-    protected void showToast(@StringRes final int msg, final Object... args) {
-        removeFromUiThread(mShowToastTask);
-        mShowToastTask = new ShowToastTask(msg, args);
-        runOnUiThread(mShowToastTask, 0);
-    }
-
-    /**
-     * Toastが表示されていればキャンセルする
-     */
-    protected void clearToast() {
-        removeFromUiThread(mShowToastTask);
-        mShowToastTask = null;
-        try {
-            if (mToast != null) {
-                mToast.cancel();
-                mToast = null;
-            }
-        } catch (final Exception e) {
-            // ignore
-        }
-    }
-
-    private ShowToastTask mShowToastTask;
-
-    private final class ShowToastTask implements Runnable {
-        final int msg;
-        final Object args;
-
-        private ShowToastTask(@StringRes final int msg, final Object... args) {
-            this.msg = msg;
-            this.args = args;
-        }
-
-        @Override
-        public void run() {
-            try {
-                if (mToast != null) {
-                    mToast.cancel();
-                    mToast = null;
-                }
-                final String _msg = (args != null) ? getString(msg, args) : getString(msg);
-                mToast = Toast.makeText(BaseActivity.this, _msg, Toast.LENGTH_SHORT);
-                mToast.show();
-            } catch (final Exception e) {
-                // ignore
-            }
-        }
-    }
+	/**
+	 * 如果要在工作线程上执行，请取消指定的Runnable
+	 * @param task
+	 */
+	protected final synchronized void removeEvent(final Runnable task) {
+		if (task == null) return;
+		try {
+			mWorkerHandler.removeCallbacks(task);
+		} catch (final Exception e) {
+			// ignore
+		}
+	}
 
 //================================================================================
+	private Toast mToast;
+	/**
+	 * 查看带有Toast的消息
+	 * @param msg
+	 */
+	protected void showToast(@StringRes final int msg, final Object... args) {
+		removeFromUiThread(mShowToastTask);
+		mShowToastTask = new ShowToastTask(msg, args);
+		runOnUiThread(mShowToastTask, 0);
+	}
 
-    /**
-     * MessageDialogFragmentメッセージダイアログからのコールバックリスナー
-     *
-     * @param dialog
-     * @param requestCode
-     * @param permissions
-     * @param result
-     */
-    @SuppressLint("NewApi")
-    @Override
-    public void onMessageDialogResult(final MessageDialogFragmentV4 dialog, final int requestCode, final String[] permissions, final boolean result) {
-        if (result) {
-            // メッセージダイアログでOKを押された時はパーミッション要求する
-            if (BuildCheck.isMarshmallow()) {
-                requestPermissions(permissions, requestCode);
-                return;
-            }
-        }
-        // メッセージダイアログでキャンセルされた時とAndroid6でない時は自前でチェックして#checkPermissionResultを呼び出す
-        for (final String permission : permissions) {
-            checkPermissionResult(requestCode, permission, PermissionCheck.hasPermission(this, permission));
-        }
-    }
+	/**
+	 * 如果显示Toast，则取消
+	 */
+	protected void clearToast() {
+		removeFromUiThread(mShowToastTask);
+		mShowToastTask = null;
+		try {
+			if (mToast != null) {
+				mToast.cancel();
+				mToast = null;
+			}
+		} catch (final Exception e) {
+			// ignore
+		}
+	}
 
     /**
      * パーミッション要求結果を受け取るためのメソッド
@@ -258,97 +194,146 @@ public class BaseActivity extends AppCompatActivity
         }
     }
 
-    /**
-     * パーミッション要求の結果をチェック
-     * ここではパーミッションを取得できなかった時にToastでメッセージ表示するだけ
-     *
-     * @param requestCode
-     * @param permission
-     * @param result
-     */
-    protected void checkPermissionResult(final int requestCode, final String permission, final boolean result) {
-        // パーミッションがないときにはメッセージを表示する
-        if (!result && (permission != null)) {
-            if (Manifest.permission.RECORD_AUDIO.equals(permission)) {
-                showToast(R.string.permission_audio);
-            }
-            if (Manifest.permission.WRITE_EXTERNAL_STORAGE.equals(permission)) {
-                showToast(R.string.permission_ext_storage);
-            }
-            if (Manifest.permission.INTERNET.equals(permission)) {
-                showToast(R.string.permission_network);
-            }
-        }
-    }
+		@Override
+		public void run() {
+			try {
+				if (mToast != null) {
+					mToast.cancel();
+					mToast = null;
+				}
+				final String _msg = (args != null) ? getString(msg, args) : getString(msg);
+				mToast = Toast.makeText(BaseActivity.this, _msg, Toast.LENGTH_SHORT);
+				mToast.show();
+			} catch (final Exception e) {
+				// ignore
+			}
+		}
+	}
 
-    // 動的パーミッション要求時の要求コード
-    protected static final int REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE = 0x12345;
-    protected static final int REQUEST_PERMISSION_AUDIO_RECORDING = 0x234567;
-    protected static final int REQUEST_PERMISSION_NETWORK = 0x345678;
-    protected static final int REQUEST_PERMISSION_CAMERA = 0x537642;
+//================================================================================
+	/**
+	 * MessageDialogFragment消息对话框中的回调侦听器
+	 * @param dialog
+	 * @param requestCode
+	 * @param permissions
+	 * @param result
+	 */
+	@SuppressLint("NewApi")
+	@Override
+	public void onMessageDialogResult(final MessageDialogFragmentV4 dialog, final int requestCode, final String[] permissions, final boolean result) {
+		if (result) {
+			// 在消息对话框中按“确定”时，请求权限
+			requestPermissions(permissions, requestCode);
+			return;
+		}
+		// 如果在消息对话框中取消了它，并且不是Android 6，则请自己检查并调用#checkPermissionResult
+		for (final String permission: permissions) {
+			checkPermissionResult(requestCode, permission, PermissionCheck.hasPermission(this, permission));
+		}
+	}
 
-    /**
-     * 外部ストレージへの書き込みパーミッションが有るかどうかをチェック
-     * なければ説明ダイアログを表示する
-     *
-     * @return true 外部ストレージへの書き込みパーミッションが有る
-     */
-    protected boolean checkPermissionWriteExternalStorage() {
-        if (!PermissionCheck.hasWriteExternalStorage(this)) {
-            MessageDialogFragmentV4.showDialog(this, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE,
-                    R.string.permission_title, R.string.permission_ext_storage_request,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE});
-            return false;
-        }
-        return true;
-    }
+	/**
+	 * 接收许可请求结果的方法
+	 * @param requestCode
+	 * @param permissions
+	 * @param grantResults
+	 */
+	@Override
+	public void onRequestPermissionsResult(final int requestCode, @NonNull final String[] permissions, @NonNull final int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);	// 我什么都没做，只是打电话给我
+		final int n = Math.min(permissions.length, grantResults.length);
+		for (int i = 0; i < n; i++) {
+			checkPermissionResult(requestCode, permissions[i], grantResults[i] == PackageManager.PERMISSION_GRANTED);
+		}
+	}
 
-    /**
-     * 録音のパーミッションが有るかどうかをチェック
-     * なければ説明ダイアログを表示する
-     *
-     * @return true 録音のパーミッションが有る
-     */
-    protected boolean checkPermissionAudio() {
-        if (!PermissionCheck.hasAudio(this)) {
-            MessageDialogFragmentV4.showDialog(this, REQUEST_PERMISSION_AUDIO_RECORDING,
-                    R.string.permission_title, R.string.permission_audio_recording_request,
-                    new String[]{Manifest.permission.RECORD_AUDIO});
-            return false;
-        }
-        return true;
-    }
+	/**
+	 * 检查许可请求的结果
+	 * 在这里，当无法获得许可时，在Toast中显示一条消息
+	 * @param requestCode
+	 * @param permission
+	 * @param result
+	 */
+	protected void checkPermissionResult(final int requestCode, final String permission, final boolean result) {
+		// 没有权限时显示一条消息
+		if (!result && (permission != null)) {
+			if (Manifest.permission.RECORD_AUDIO.equals(permission)) {
+				showToast(R.string.permission_audio);
+			}
+			if (Manifest.permission.WRITE_EXTERNAL_STORAGE.equals(permission)) {
+				showToast(R.string.permission_ext_storage);
+			}
+			if (Manifest.permission.INTERNET.equals(permission)) {
+				showToast(R.string.permission_network);
+			}
+		}
+	}
 
-    /**
-     * ネットワークアクセスのパーミッションが有るかどうかをチェック
-     * なければ説明ダイアログを表示する
-     *
-     * @return true ネットワークアクセスのパーミッションが有る
-     */
-    protected boolean checkPermissionNetwork() {
-        if (!PermissionCheck.hasNetwork(this)) {
-            MessageDialogFragmentV4.showDialog(this, REQUEST_PERMISSION_NETWORK,
-                    R.string.permission_title, R.string.permission_network_request,
-                    new String[]{Manifest.permission.INTERNET});
-            return false;
-        }
-        return true;
-    }
+	// 动态权限请求的请求代码
+	protected static final int REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE = 0x12345;
+	protected static final int REQUEST_PERMISSION_AUDIO_RECORDING = 0x234567;
+	protected static final int REQUEST_PERMISSION_NETWORK = 0x345678;
+	protected static final int REQUEST_PERMISSION_CAMERA = 0x537642;
 
-    /**
-     * カメラアクセスのパーミッションがあるかどうかをチェック
-     * なければ説明ダイアログを表示する
-     *
-     * @return true カメラアクセスのパーミッションが有る
-     */
-    protected boolean checkPermissionCamera() {
-        if (!PermissionCheck.hasCamera(this)) {
-            MessageDialogFragmentV4.showDialog(this, REQUEST_PERMISSION_CAMERA,
-                    R.string.permission_title, R.string.permission_camera_request,
-                    new String[]{Manifest.permission.CAMERA});
-            return false;
-        }
-        return true;
-    }
+	/**
+	 * 检查您是否具有对外部存储的写入权限
+	 * 如果没有，显示说明对话框
+	 * @return true 拥有对外部存储的写入权限
+	 */
+	protected boolean checkPermissionWriteExternalStorage() {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) return true;
+		if (!PermissionCheck.hasWriteExternalStorage(this)) {
+			MessageDialogFragmentV4.showDialog(this, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE,
+				R.string.permission_title, R.string.permission_ext_storage_request,
+				new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE});
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * 检查您是否有录音权限
+	 * 如果没有，显示说明对话框
+	 * @return true 有录音权限
+	 */
+	protected boolean checkPermissionAudio() {
+		if (!PermissionCheck.hasAudio(this)) {
+			MessageDialogFragmentV4.showDialog(this, REQUEST_PERMISSION_AUDIO_RECORDING,
+				R.string.permission_title, R.string.permission_audio_recording_request,
+				new String[]{Manifest.permission.RECORD_AUDIO});
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * 检查您是否具有网络访问权限
+	 * 如果没有，显示说明对话框
+	 * @return true 具有网络访问权限
+	 */
+	protected boolean checkPermissionNetwork() {
+		if (!PermissionCheck.hasNetwork(this)) {
+			MessageDialogFragmentV4.showDialog(this, REQUEST_PERMISSION_NETWORK,
+				R.string.permission_title, R.string.permission_network_request,
+				new String[]{Manifest.permission.INTERNET});
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * 检查您是否具有摄像头访问权限
+	 * 如果没有，显示说明对话框
+	 * @return true 具有摄像头访问权限
+	 */
+	protected boolean checkPermissionCamera() {
+		if (!PermissionCheck.hasCamera(this)) {
+			MessageDialogFragmentV4.showDialog(this, REQUEST_PERMISSION_CAMERA,
+				R.string.permission_title, R.string.permission_camera_request,
+				new String[]{Manifest.permission.CAMERA});
+			return false;
+		}
+		return true;
+	}
 
 }

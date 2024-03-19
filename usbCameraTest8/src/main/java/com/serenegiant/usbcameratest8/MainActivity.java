@@ -41,12 +41,12 @@ import android.widget.ToggleButton;
 
 import com.serenegiant.common.BaseActivity;
 
-import com.serenegiant.usb.CameraDialog;
+import com.serenegiant.usb_libuvccamera.CameraDialog;
 import com.serenegiant.usbcameracommon.UVCCameraHandler;
-import com.serenegiant.usb.USBMonitor;
-import com.serenegiant.usb.USBMonitor.OnDeviceConnectListener;
-import com.serenegiant.usb.USBMonitor.UsbControlBlock;
-import com.serenegiant.usb.UVCCamera;
+import com.serenegiant.usb_libuvccamera.LibUVCCameraUSBMonitor;
+import com.serenegiant.usb_libuvccamera.LibUVCCameraUSBMonitor.OnDeviceConnectListener;
+import com.serenegiant.usb_libuvccamera.LibUVCCameraUSBMonitor.UsbControlBlock;
+import com.serenegiant.usb_libuvccamera.UVCCamera;
 import com.serenegiant.utils.ViewAnimationHelper;
 import com.serenegiant.widget.CameraViewInterface;
 
@@ -87,7 +87,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 	/**
 	 * for accessing USB
 	 */
-	private USBMonitor mUSBMonitor;
+	private LibUVCCameraUSBMonitor mUSBMonitor;
 	/**
 	 * Handler to execute camera related methods sequentially on private thread
 	 */
@@ -113,7 +113,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		if (DEBUG) Log.v(TAG, "onCreate:");
+		if (DEBUG) { Log.v(TAG, "onCreate:"); }
 		setContentView(R.layout.activity_main);
 		mCameraButton = (ToggleButton)findViewById(R.id.camera_button);
 		mCameraButton.setOnCheckedChangeListener(mOnCheckedChangeListener);
@@ -123,7 +123,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 		final View view = findViewById(R.id.camera_view);
 		view.setOnLongClickListener(mOnLongClickListener);
 		mUVCCameraView = (CameraViewInterface)view;
-		mUVCCameraView.setAspectRatio(PREVIEW_WIDTH / (float)PREVIEW_HEIGHT);
 
 		mBrightnessButton = findViewById(R.id.brightness_button);
 		mBrightnessButton.setOnClickListener(mOnClickListener);
@@ -139,7 +138,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 		mValueLayout = findViewById(R.id.value_layout);
 		mValueLayout.setVisibility(View.INVISIBLE);
 
-		mUSBMonitor = new USBMonitor(this, mOnDeviceConnectListener);
+		mUSBMonitor = new LibUVCCameraUSBMonitor(this, mOnDeviceConnectListener);
 		mCameraHandler = UVCCameraHandler.createHandler(this, mUVCCameraView,
 			USE_SURFACE_ENCODER ? 0 : 1, PREVIEW_WIDTH, PREVIEW_HEIGHT, PREVIEW_MODE);
 	}
@@ -147,7 +146,8 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 	@Override
 	protected void onStart() {
 		super.onStart();
-		if (DEBUG) Log.v(TAG, "onStart:");
+		if (DEBUG) { Log.v(TAG, "onStart:"); }
+		checkPermissionCamera();
 		mUSBMonitor.register();
 		if (mUVCCameraView != null)
 			mUVCCameraView.onResume();
@@ -155,7 +155,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
 	@Override
 	protected void onStop() {
-		if (DEBUG) Log.v(TAG, "onStop:");
+		if (DEBUG) { Log.v(TAG, "onStop:"); }
 		mCameraHandler.close();
 		if (mUVCCameraView != null)
 			mUVCCameraView.onPause();
@@ -165,7 +165,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
 	@Override
 	public void onDestroy() {
-		if (DEBUG) Log.v(TAG, "onDestroy:");
+		if (DEBUG) { Log.v(TAG, "onDestroy:"); }
         if (mCameraHandler != null) {
 	        mCameraHandler.release();
 	        mCameraHandler = null;
@@ -288,16 +288,21 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 		}
 
 		@Override
-		public void onConnect(final UsbDevice device, final UsbControlBlock ctrlBlock, final boolean createNew) {
-			if (DEBUG) Log.v(TAG, "onConnect:");
-			mCameraHandler.open(ctrlBlock);
+		public void onDettach(UsbDevice usbDevice) {
+			Toast.makeText(MainActivity.this, "USB_DEVICE_DETACHED", Toast.LENGTH_SHORT).show();
+		}
+
+		@Override
+		public void onConnect(UsbDevice usbDevice, UsbControlBlock usbControlBlock, boolean b) {
+			if (DEBUG) { Log.v(TAG, "onConnect:"); }
+			mCameraHandler.open(usbControlBlock);
 			startPreview();
 			updateItems();
 		}
 
 		@Override
-		public void onDisconnect(final UsbDevice device, final UsbControlBlock ctrlBlock) {
-			if (DEBUG) Log.v(TAG, "onDisconnect:");
+		public void onDisconnect(@NonNull UsbDevice usbDevice, UsbControlBlock usbControlBlock) {
+			if (DEBUG) { Log.v(TAG, "onDisconnect:"); }
 			if (mCameraHandler != null) {
 				queueEvent(new Runnable() {
 					@Override
@@ -309,15 +314,12 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 				updateItems();
 			}
 		}
-		@Override
-		public void onDettach(final UsbDevice device) {
-			Toast.makeText(MainActivity.this, "USB_DEVICE_DETACHED", Toast.LENGTH_SHORT).show();
-		}
 
 		@Override
 		public void onCancel(final UsbDevice device) {
 			setCameraButton(false);
 		}
+
 	};
 
 	/**
@@ -325,13 +327,13 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 	 * @return
 	 */
 	@Override
-	public USBMonitor getUSBMonitor() {
+	public LibUVCCameraUSBMonitor getUSBMonitor() {
 		return mUSBMonitor;
 	}
 
 	@Override
 	public void onDialogResult(boolean canceled) {
-		if (DEBUG) Log.v(TAG, "onDialogResult:canceled=" + canceled);
+		if (DEBUG) { Log.v(TAG, "onDialogResult:canceled=" + canceled); }
 		if (canceled) {
 			setCameraButton(false);
 		}
@@ -379,11 +381,11 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
 	private int mSettingMode = -1;
 	/**
-	 * 設定画面を表示
+	 * 显示设定画面
 	 * @param mode
 	 */
 	private final void showSettings(final int mode) {
-		if (DEBUG) Log.v(TAG, String.format("showSettings:%08x", mode));
+		if (DEBUG) { Log.v(TAG, String.format("showSettings:%08x", mode)); }
 		hideSetting(false);
 		if (isActive()) {
 			switch (mode) {
@@ -411,8 +413,8 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 	}
 
 	/**
-	 * 設定画面を非表示にする
-	 * @param fadeOut trueならばフェードアウトさせる, falseなら即座に非表示にする
+	 * 隐藏设置屏幕
+	 * @param fadeOut 淡出为true，如果为false，则立即隐藏
 	 */
 	protected final void hideSetting(final boolean fadeOut) {
 		removeFromUiThread(mSettingHideTask);
@@ -441,12 +443,12 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 	};
 
 	/**
-	 * 設定値変更用のシークバーのコールバックリスナー
+	 * Seekbar回调侦听器，用于设置值更改
 	 */
 	private final SeekBar.OnSeekBarChangeListener mOnSeekBarChangeListener = new SeekBar.OnSeekBarChangeListener() {
 		@Override
 		public void onProgressChanged(final SeekBar seekBar, final int progress, final boolean fromUser) {
-			// 設定が変更された時はシークバーの非表示までの時間を延長する
+			// 更改设置后，延长查找栏消失之前的时间
 			if (fromUser) {
 				runOnUiThread(mSettingHideTask, SETTINGS_HIDE_DELAY_MS);
 			}
@@ -458,8 +460,8 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
 		@Override
 		public void onStopTrackingTouch(final SeekBar seekBar) {
-			// シークバーにタッチして値を変更した時はonProgressChangedへ
-			// 行かないみたいなのでここでも非表示までの時間を延長する
+			// 触摸搜索栏并更改值时，请转到onProgressChanged
+			// 它似乎没有消失，所以现在是时候隐藏了
 			runOnUiThread(mSettingHideTask, SETTINGS_HIDE_DELAY_MS);
 			if (isActive() && checkSupportFlag(mSettingMode)) {
 				switch (mSettingMode) {
@@ -475,13 +477,13 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 	private final ViewAnimationHelper.ViewAnimationListener
 		mViewAnimationListener = new ViewAnimationHelper.ViewAnimationListener() {
 		@Override
-		public void onAnimationStart(@NonNull final Animator animator, @NonNull final View target, final int animationType) {
-//			if (DEBUG) Log.v(TAG, "onAnimationStart:");
+		public void onAnimationStart(@NonNull final Animator animator, @NonNull final View view, final int animationType) {
+//			if (DEBUG) { Log.v(TAG, "onAnimationStart:"); }
 		}
 
 		@Override
-		public void onAnimationEnd(@NonNull final Animator animator, @NonNull final View target, final int animationType) {
-			final int id = target.getId();
+		public void onAnimationEnd(@NonNull final Animator animator, @NonNull final View view, final int animationType) {
+			final int id = view.getId();
 			switch (animationType) {
 			case ViewAnimationHelper.ANIMATION_FADE_IN:
 			case ViewAnimationHelper.ANIMATION_FADE_OUT:

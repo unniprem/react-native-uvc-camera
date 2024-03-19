@@ -106,7 +106,7 @@ public abstract class Encoder implements Runnable {
     }
 
 	public void startRecording() {
-   	if (DEBUG) Log.v(TAG, "startRecording");
+   	if (DEBUG) { Log.v(TAG, "startRecording"); }
 		synchronized (mSync) {
 			mIsCapturing = true;
 			mRequestStop = false;
@@ -118,7 +118,7 @@ public abstract class Encoder implements Runnable {
     * the method to request stop encoding
     */
 	public void stopRecording() {
-		if (DEBUG) Log.v(TAG, "stopRecording");
+		if (DEBUG) { Log.v(TAG, "stopRecording"); }
 		mRequestStop = true;
 		synchronized (mSync) {
 			if (!mIsCapturing) {
@@ -145,7 +145,7 @@ public abstract class Encoder implements Runnable {
      * (request to process frame data)
      */
     public boolean frameAvailable() {
-//    	if (DEBUG) Log.v(TAG, "frameAvailable:");
+//    	if (DEBUG) { Log.v(TAG, "frameAvailable:"); }
         synchronized (mSync) {
             if (!mIsCapturing || mRequestStop) {
                 return false;
@@ -161,7 +161,7 @@ public abstract class Encoder implements Runnable {
      */
 	@Override
 	public void run() {
-		if (DEBUG) Log.d(TAG, "Encoder thread starting");
+		if (DEBUG) { Log.d(TAG, "Encoder thread starting"); }
 //		android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
         synchronized (mSync) {
             mRequestStop = false;
@@ -200,7 +200,7 @@ public abstract class Encoder implements Runnable {
 	        	}
         	}
         } // end of while
-		if (DEBUG) Log.d(TAG, "Encoder thread exiting");
+		if (DEBUG) { Log.d(TAG, "Encoder thread exiting"); }
         synchronized (mSync) {
         	mRequestStop = true;
             mIsCapturing = false;
@@ -213,7 +213,7 @@ public abstract class Encoder implements Runnable {
      * Release all releated objects
      */
     protected void release() {
-		if (DEBUG) Log.d(TAG, "release:");
+		if (DEBUG) { Log.d(TAG, "release:"); }
 		try {
 			mEncodeListener.onRelease(this);
 		} catch (final Exception e) {
@@ -242,7 +242,7 @@ public abstract class Encoder implements Runnable {
     }
 
     protected void signalEndOfInputStream() {
-		if (DEBUG) Log.d(TAG, "sending EOS to encoder");
+		if (DEBUG) { Log.d(TAG, "sending EOS to encoder"); }
         // signalEndOfInputStream is only avairable for video encoding with surface
         // and equivalent sending a empty buffer with BUFFER_FLAG_END_OF_STREAM flag.
 //		mMediaCodec.signalEndOfInputStream();	// API >= 18
@@ -270,11 +270,11 @@ public abstract class Encoder implements Runnable {
 	            	inputBuffer.put(buffer, ix, sz);
 	            }
 	            ix += sz;
-//	            if (DEBUG) Log.v(TAG, "encode:queueInputBuffer");
+//	            if (DEBUG) { Log.v(TAG, "encode:queueInputBuffer"); }
 	            if (length <= 0) {
 	            	// send EOS
 	            	mIsEOS = true;
-	            	if (DEBUG) Log.i(TAG, "send BUFFER_FLAG_END_OF_STREAM");
+	            	if (DEBUG) { Log.i(TAG, "send BUFFER_FLAG_END_OF_STREAM"); }
 	            	mMediaCodec.queueInputBuffer(inputBufferIndex, 0, 0,
 	            		presentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
 		            break;
@@ -312,11 +312,11 @@ LOOP:	while (mIsCapturing) {
                 		break LOOP;		// out of while
                 }
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
-            	if (DEBUG) Log.v(TAG, "INFO_OUTPUT_BUFFERS_CHANGED");
+            	if (DEBUG) { Log.v(TAG, "INFO_OUTPUT_BUFFERS_CHANGED"); }
                 // this shoud not come when encoding
                 encoderOutputBuffers = mMediaCodec.getOutputBuffers();
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-            	if (DEBUG) Log.v(TAG, "INFO_OUTPUT_FORMAT_CHANGED");
+            	if (DEBUG) { Log.v(TAG, "INFO_OUTPUT_FORMAT_CHANGED"); }
             	// this status indicate the output format of codec is changed
                 // this should come only once before actual encoded data
             	// but this status never come on Android4.3 or less
@@ -332,7 +332,7 @@ LOOP:	while (mIsCapturing) {
                	mMuxer.start();
             } else if (encoderStatus < 0) {
             	// unexpected status
-            	if (DEBUG) Log.w(TAG, "drain:unexpected result from encoder#dequeueOutputBuffer: " + encoderStatus);
+            	if (DEBUG) { Log.w(TAG, "drain:unexpected result from encoder#dequeueOutputBuffer: " + encoderStatus); }
             } else {
                 final ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
                 if (encodedData == null) {

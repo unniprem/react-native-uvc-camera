@@ -41,7 +41,7 @@ public class MainActivity extends BaseActivity {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_main);
 		if (savedInstanceState == null) {
-			if (DEBUG) Log.i(TAG, "onCreate:new");
+			if (DEBUG) { Log.i(TAG, "onCreate:new"); }
 			final Fragment fragment = new CameraFragment();
 			getFragmentManager().beginTransaction()
 					.add(R.id.container, fragment).commit();
@@ -51,19 +51,19 @@ public class MainActivity extends BaseActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if (DEBUG) Log.v(TAG, "onResume:");
+		if (DEBUG) { Log.v(TAG, "onResume:"); }
 //		updateScreenRotation();
 	}
 
 	@Override
 	protected void onPause() {
-		if (DEBUG) Log.v(TAG, "onPause:isFinishing=" + isFinishing());
+		if (DEBUG) { Log.v(TAG, "onPause:isFinishing=" + isFinishing()); }
 		super.onPause();
 	}
 
 	@Override
 	protected void onDestroy() {
-		if (DEBUG) Log.v(TAG, "onDestroy:");
+		if (DEBUG) { Log.v(TAG, "onDestroy:"); }
 		super.onDestroy();
 	}
 

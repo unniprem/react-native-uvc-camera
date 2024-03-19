@@ -38,11 +38,11 @@ import android.widget.ToggleButton;
 
 import com.serenegiant.common.BaseActivity;
 
-import com.serenegiant.usb.CameraDialog;
-import com.serenegiant.usb.USBMonitor;
-import com.serenegiant.usb.USBMonitor.OnDeviceConnectListener;
-import com.serenegiant.usb.USBMonitor.UsbControlBlock;
-import com.serenegiant.usb.UVCCamera;
+import com.serenegiant.usb_libuvccamera.CameraDialog;
+import com.serenegiant.usb_libuvccamera.LibUVCCameraUSBMonitor;
+import com.serenegiant.usb_libuvccamera.LibUVCCameraUSBMonitor.OnDeviceConnectListener;
+import com.serenegiant.usb_libuvccamera.LibUVCCameraUSBMonitor.UsbControlBlock;
+import com.serenegiant.usb_libuvccamera.UVCCamera;
 import com.serenegiant.usbcameracommon.UVCCameraHandler;
 import com.serenegiant.widget.CameraViewInterface;
 
@@ -73,7 +73,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 	/**
 	 * for accessing USB
 	 */
-	private USBMonitor mUSBMonitor;
+	private LibUVCCameraUSBMonitor mUSBMonitor;
 	/**
 	 * Handler to execute camera releated methods sequentially on private thread
 	 */
@@ -94,7 +94,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		if (DEBUG) Log.v(TAG, "onCreate:");
+		if (DEBUG) { Log.v(TAG, "onCreate:"); }
 		setContentView(R.layout.activity_main);
 		mCameraButton = (ToggleButton)findViewById(R.id.camera_button);
 		mCameraButton.setOnCheckedChangeListener(mOnCheckedChangeListener);
@@ -104,9 +104,8 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 		final View view = findViewById(R.id.camera_view);
 		view.setOnLongClickListener(mOnLongClickListener);
 		mUVCCameraView = (CameraViewInterface)view;
-		mUVCCameraView.setAspectRatio(PREVIEW_WIDTH / (float)PREVIEW_HEIGHT);
 
-		mUSBMonitor = new USBMonitor(this, mOnDeviceConnectListener);
+		mUSBMonitor = new LibUVCCameraUSBMonitor(this, mOnDeviceConnectListener);
 		mCameraHandler = UVCCameraHandler.createHandler(this, mUVCCameraView,
 			2, PREVIEW_WIDTH, PREVIEW_HEIGHT, PREVIEW_MODE);
 	}
@@ -114,7 +113,8 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 	@Override
 	protected void onStart() {
 		super.onStart();
-		if (DEBUG) Log.v(TAG, "onStart:");
+		if (DEBUG) { Log.v(TAG, "onStart:"); }
+		checkPermissionCamera();
 		mUSBMonitor.register();
 		if (mUVCCameraView != null)
 			mUVCCameraView.onResume();
@@ -122,7 +122,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
 	@Override
 	protected void onStop() {
-		if (DEBUG) Log.v(TAG, "onStop:");
+		if (DEBUG) { Log.v(TAG, "onStop:"); }
 		queueEvent(new Runnable() {
 			@Override
 			public void run() {
@@ -139,7 +139,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
 	@Override
 	public void onDestroy() {
-		if (DEBUG) Log.v(TAG, "onDestroy:");
+		if (DEBUG) { Log.v(TAG, "onDestroy:"); }
 		if (mCameraHandler != null) {
 			mCameraHandler.release();
 			mCameraHandler = null;
@@ -265,14 +265,14 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
 		@Override
 		public void onConnect(final UsbDevice device, final UsbControlBlock ctrlBlock, final boolean createNew) {
-			if (DEBUG) Log.v(TAG, "onConnect:");
+			if (DEBUG) { Log.v(TAG, "onConnect:"); }
 			mCameraHandler.open(ctrlBlock);
 			startPreview();
 		}
 
 		@Override
 		public void onDisconnect(final UsbDevice device, final UsbControlBlock ctrlBlock) {
-			if (DEBUG) Log.v(TAG, "onDisconnect:");
+			if (DEBUG) { Log.v(TAG, "onDisconnect:"); }
 			if (mCameraHandler != null) {
 				mCameraHandler.close();
 				setCameraButton(false);
@@ -293,7 +293,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 	 * @return
 	 */
 	@Override
-	public USBMonitor getUSBMonitor() {
+	public LibUVCCameraUSBMonitor getUSBMonitor() {
 		return mUSBMonitor;
 	}
 
@@ -459,7 +459,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 //			}
 //
 //			public AbstractUVCCameraHandler getHandler() {
-//				if (DEBUG) Log.v(TAG_THREAD, "getHandler:");
+//				if (DEBUG) { Log.v(TAG_THREAD, "getHandler:"); }
 //				synchronized (mSync) {
 //					if (mHandler == null)
 //					try {
@@ -479,15 +479,15 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 //			}
 //
 //			public void handleOpen(final UsbControlBlock ctrlBlock) {
-//				if (DEBUG) Log.v(TAG_THREAD, "handleOpen:");
+//				if (DEBUG) { Log.v(TAG_THREAD, "handleOpen:"); }
 //				handleClose();
 //				mUVCCamera = new UVCCamera();
 //				mUVCCamera.open(ctrlBlock);
-//				if (DEBUG) Log.i(TAG, "supportedSize:" + mUVCCamera.getSupportedSize());
+//				if (DEBUG) { Log.i(TAG, "supportedSize:" + mUVCCamera.getSupportedSize()); }
 //			}
 //
 //			public void handleClose() {
-//				if (DEBUG) Log.v(TAG_THREAD, "handleClose:");
+//				if (DEBUG) { Log.v(TAG_THREAD, "handleClose:"); }
 //				handleStopRecording();
 //				if (mUVCCamera != null) {
 //					mUVCCamera.stopPreview();
@@ -497,7 +497,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 //			}
 //
 //			public void handleStartPreview(final Surface surface) {
-//				if (DEBUG) Log.v(TAG_THREAD, "handleStartPreview:");
+//				if (DEBUG) { Log.v(TAG_THREAD, "handleStartPreview:"); }
 //				if (mUVCCamera == null) return;
 //				try {
 //					mUVCCamera.setPreviewSize(PREVIEW_WIDTH, PREVIEW_HEIGHT, PREVIEW_MODE);
@@ -516,7 +516,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 //			}
 //
 //			public void handleStopPreview() {
-//				if (DEBUG) Log.v(TAG_THREAD, "handleStopPreview:");
+//				if (DEBUG) { Log.v(TAG_THREAD, "handleStopPreview:"); }
 //				if (mUVCCamera != null) {
 //					mUVCCamera.stopPreview();
 //				}
@@ -526,7 +526,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 //			}
 //
 //			public void handleCaptureStill() {
-//				if (DEBUG) Log.v(TAG_THREAD, "handleCaptureStill:");
+//				if (DEBUG) { Log.v(TAG_THREAD, "handleCaptureStill:"); }
 //				final MainActivity parent = mWeakParent.get();
 //				if (parent == null) return;
 //				mSoundPool.play(mSoundId, 0.2f, 0.2f, 0, 0, 1.0f);	// play shutter sound
@@ -553,7 +553,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 //			}
 //
 //			public void handleStartRecording() {
-//				if (DEBUG) Log.v(TAG_THREAD, "handleStartRecording:");
+//				if (DEBUG) { Log.v(TAG_THREAD, "handleStartRecording:"); }
 //				try {
 //					if ((mUVCCamera == null) || (mMuxer != null)) return;
 //					mMuxer = new MediaMuxerWrapper(".mp4");	// if you record audio only, ".m4a" is also OK.
@@ -572,7 +572,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 //			}
 //
 //			public void handleStopRecording() {
-//				if (DEBUG) Log.v(TAG_THREAD, "handleStopRecording:mMuxer=" + mMuxer);
+//				if (DEBUG) { Log.v(TAG_THREAD, "handleStopRecording:mMuxer=" + mMuxer)); }
 //				mVideoEncoder = null;
 //				if (mMuxer != null) {
 //					mMuxer.stopRecording();
@@ -584,11 +584,11 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 //			}
 //
 //			public void handleUpdateMedia(final String path) {
-//				if (DEBUG) Log.v(TAG_THREAD, "handleUpdateMedia:path=" + path);
+//				if (DEBUG) { Log.v(TAG_THREAD, "handleUpdateMedia:path=" + path)); }
 //				final MainActivity parent = mWeakParent.get();
 //				if (parent != null && parent.getApplicationContext() != null) {
 //					try {
-//						if (DEBUG) Log.i(TAG, "MediaScannerConnection#scanFile");
+//						if (DEBUG) { Log.i(TAG, "MediaScannerConnection#scanFile"); }
 //						MediaScannerConnection.scanFile(parent.getApplicationContext(), new String[]{ path }, null, null);
 //					} catch (final Exception e) {
 //						Log.e(TAG, "handleUpdateMedia:", e);
@@ -604,7 +604,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 //			}
 //
 //			public void handleRelease() {
-//				if (DEBUG) Log.v(TAG_THREAD, "handleRelease:");
+//				if (DEBUG) { Log.v(TAG_THREAD, "handleRelease:"); }
 // 				handleClose();
 //				if (!mIsRecording)
 //					Looper.myLooper().quit();

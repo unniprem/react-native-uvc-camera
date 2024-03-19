@@ -21,7 +21,7 @@
  *  may have a different license, see the respective files.
  */
 
-package com.serenegiant.usb;
+package com.serenegiant.usb_libuvccamera;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
@@ -43,15 +43,15 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
+import android.os.Build;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 
-import com.serenegiant.utils.BuildCheck;
 import com.serenegiant.utils.HandlerThreadHandler;
 
-public final class USBMonitor {
+public final class LibUVCCameraUSBMonitor {
 
 	private static final boolean DEBUG = false;	// TODO set false on production
 	private static final String TAG = "USBMonitor";
@@ -62,7 +62,7 @@ public final class USBMonitor {
 	public static final String ACTION_USB_DEVICE_ATTACHED = "android.hardware.usb.action.USB_DEVICE_ATTACHED";
 
 	/**
-	 * openしているUsbControlBlock
+	 * UsbControlBlock打开
 	 */
 	private final ConcurrentHashMap<UsbDevice, UsbControlBlock> mCtrlBlocks = new ConcurrentHashMap<UsbDevice, UsbControlBlock>();
 	private final SparseArray<WeakReference<UsbDevice>> mHasPermissions = new SparseArray<WeakReference<UsbDevice>>();
@@ -71,15 +71,15 @@ public final class USBMonitor {
 	private final UsbManager mUsbManager;
 	private final OnDeviceConnectListener mOnDeviceConnectListener;
 	private PendingIntent mPermissionIntent = null;
-	private List<DeviceFilter> mDeviceFilters = new ArrayList<DeviceFilter>();
+	private List<LibUVCCameraDeviceFilter> mDeviceFilters = new ArrayList<LibUVCCameraDeviceFilter>();
 
 	/**
-	 * コールバックをワーカースレッドで呼び出すためのハンドラー
+	 * 在工作线程上调用回调的处理程序
 	 */
 	private final Handler mAsyncHandler;
 	private volatile boolean destroyed;
 	/**
-	 * USB機器の状態変更時のコールバックリスナー
+	 * USB设备状态更改时的回调侦听器
 	 */
 	public interface OnDeviceConnectListener {
 		/**
@@ -112,7 +112,7 @@ public final class USBMonitor {
 		public void onCancel(UsbDevice device);
 	}
 
-	public USBMonitor(final Context context, final OnDeviceConnectListener listener) {
+	public LibUVCCameraUSBMonitor(final Context context, final OnDeviceConnectListener listener) {
 		if (DEBUG) Log.v(TAG, "USBMonitor:Constructor");
 		if (listener == null)
 			throw new IllegalArgumentException("OnDeviceConnectListener should not null.");
@@ -133,7 +133,7 @@ public final class USBMonitor {
 		unregister();
 		if (!destroyed) {
 			destroyed = true;
-			// モニターしているUSB機器を全てcloseする
+			// 关闭所有受监控的USB设备
 			final Set<UsbDevice> keys = mCtrlBlocks.keySet();
 			if (keys != null) {
 				UsbControlBlock ctrlBlock;
@@ -167,7 +167,12 @@ public final class USBMonitor {
 			if (DEBUG) Log.i(TAG, "register:");
 			final Context context = mWeakContext.get();
 			if (context != null) {
-				mPermissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
+				mPermissionIntent = PendingIntent.getBroadcast(
+						context,
+						0,
+						new Intent(ACTION_USB_PERMISSION),
+						(Build.VERSION.SDK_INT >= 31) ? PendingIntent.FLAG_MUTABLE : 0
+				);
 				final IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
 				// ACTION_USB_DEVICE_ATTACHED never comes on some devices so it should not be added here
 				filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
@@ -184,7 +189,7 @@ public final class USBMonitor {
 	 * @throws IllegalStateException
 	 */
 	public synchronized void unregister() throws IllegalStateException {
-		// 接続チェック用Runnableを削除
+		// 删除可运行以进行连接检查
 		mDeviceCounts = 0;
 		if (!destroyed) {
 			mAsyncHandler.removeCallbacks(mDeviceCheckRunnable);
@@ -212,28 +217,28 @@ public final class USBMonitor {
 	 * @param filter
 	 * @throws IllegalStateException
 	 */
-	public void setDeviceFilter(final DeviceFilter filter) throws IllegalStateException {
+	public void setDeviceFilter(final LibUVCCameraDeviceFilter filter) throws IllegalStateException {
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		mDeviceFilters.clear();
 		mDeviceFilters.add(filter);
 	}
 
 	/**
-	 * デバイスフィルターを追加
+	 * 添加设备过滤器
 	 * @param filter
 	 * @throws IllegalStateException
 	 */
-	public void addDeviceFilter(final DeviceFilter filter) throws IllegalStateException {
+	public void addDeviceFilter(final LibUVCCameraDeviceFilter filter) throws IllegalStateException {
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		mDeviceFilters.add(filter);
 	}
 
 	/**
-	 * デバイスフィルターを削除
+	 * 删除设备过滤器
 	 * @param filter
 	 * @throws IllegalStateException
 	 */
-	public void removeDeviceFilter(final DeviceFilter filter) throws IllegalStateException {
+	public void removeDeviceFilter(final LibUVCCameraDeviceFilter filter) throws IllegalStateException {
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		mDeviceFilters.remove(filter);
 	}
@@ -243,7 +248,7 @@ public final class USBMonitor {
 	 * @param filters
 	 * @throws IllegalStateException
 	 */
-	public void setDeviceFilter(final List<DeviceFilter> filters) throws IllegalStateException {
+	public void setDeviceFilter(final List<LibUVCCameraDeviceFilter> filters) throws IllegalStateException {
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		mDeviceFilters.clear();
 		mDeviceFilters.addAll(filters);
@@ -254,7 +259,7 @@ public final class USBMonitor {
 	 * @param filters
 	 * @throws IllegalStateException
 	 */
-	public void addDeviceFilter(final List<DeviceFilter> filters) throws IllegalStateException {
+	public void addDeviceFilter(final List<LibUVCCameraDeviceFilter> filters) throws IllegalStateException {
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		mDeviceFilters.addAll(filters);
 	}
@@ -263,7 +268,7 @@ public final class USBMonitor {
 	 * remove device filters
 	 * @param filters
 	 */
-	public void removeDeviceFilter(final List<DeviceFilter> filters) throws IllegalStateException {
+	public void removeDeviceFilter(final List<LibUVCCameraDeviceFilter> filters) throws IllegalStateException {
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		mDeviceFilters.removeAll(filters);
 	}
@@ -294,7 +299,7 @@ public final class USBMonitor {
 	 * @return
 	 * @throws IllegalStateException
 	 */
-	public List<UsbDevice> getDeviceList(final List<DeviceFilter> filters) throws IllegalStateException {
+	public List<UsbDevice> getDeviceList(final List<LibUVCCameraDeviceFilter> filters) throws IllegalStateException {
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		final HashMap<String, UsbDevice> deviceList = mUsbManager.getDeviceList();
 		final List<UsbDevice> result = new ArrayList<UsbDevice>();
@@ -303,7 +308,7 @@ public final class USBMonitor {
 				result.addAll(deviceList.values());
 			} else {
 				for (final UsbDevice device: deviceList.values() ) {
-					for (final DeviceFilter filter: filters) {
+					for (final LibUVCCameraDeviceFilter filter: filters) {
 						if ((filter != null) && filter.matches(device)) {
 							// when filter matches
 							if (!filter.isExclude) {
@@ -324,7 +329,7 @@ public final class USBMonitor {
 	 * @return
 	 * @throws IllegalStateException
 	 */
-	public List<UsbDevice> getDeviceList(final DeviceFilter filter) throws IllegalStateException {
+	public List<UsbDevice> getDeviceList(final LibUVCCameraDeviceFilter filter) throws IllegalStateException {
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		final HashMap<String, UsbDevice> deviceList = mUsbManager.getDeviceList();
 		final List<UsbDevice> result = new ArrayList<UsbDevice>();
@@ -381,7 +386,7 @@ public final class USBMonitor {
 	/**
 	 * return whether the specific Usb device has permission
 	 * @param device
-	 * @return true: 指定したUsbDeviceにパーミッションがある
+	 * @return true: 指定的UsbDevice拥有权限
 	 * @throws IllegalStateException
 	 */
 	public final boolean hasPermission(final UsbDevice device) throws IllegalStateException {
@@ -390,7 +395,7 @@ public final class USBMonitor {
 	}
 
 	/**
-	 * 内部で保持しているパーミッション状態を更新
+	 * 更新内部权限状态
 	 * @param device
 	 * @param hasPermission
 	 * @return hasPermission
@@ -445,16 +450,16 @@ public final class USBMonitor {
 	}
 
 	/**
-	 * 指定したUsbDeviceをopenする
+	 * 打开指定的UsbDevice
 	 * @param device
 	 * @return
-	 * @throws SecurityException パーミッションがなければSecurityExceptionを投げる
+	 * @throws SecurityException 如果权限丢失，则抛出SecurityException
 	 */
 	public UsbControlBlock openDevice(final UsbDevice device) throws SecurityException {
 		if (hasPermission(device)) {
 			UsbControlBlock result = mCtrlBlocks.get(device);
 			if (result == null) {
-				result = new UsbControlBlock(USBMonitor.this, device);    // この中でopenDeviceする
+				result = new UsbControlBlock(LibUVCCameraUSBMonitor.this, device);    // この中でopenDeviceする
 				mCtrlBlocks.put(device, result);
 			}
 			return result;
@@ -474,7 +479,7 @@ public final class USBMonitor {
 			final String action = intent.getAction();
 			if (ACTION_USB_PERMISSION.equals(action)) {
 				// when received the result of requesting USB permission
-				synchronized (USBMonitor.this) {
+				synchronized (LibUVCCameraUSBMonitor.this) {
 					final UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 					if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
 						if (device != null) {
@@ -560,7 +565,7 @@ public final class USBMonitor {
 				final boolean createNew;
 				ctrlBlock = mCtrlBlocks.get(device);
 				if (ctrlBlock == null) {
-					ctrlBlock = new UsbControlBlock(USBMonitor.this, device);
+					ctrlBlock = new UsbControlBlock(LibUVCCameraUSBMonitor.this, device);
 					mCtrlBlocks.put(device, ctrlBlock);
 					createNew = true;
 				} else {
@@ -614,10 +619,9 @@ public final class USBMonitor {
 	}
 
 	/**
-	 * USB機器毎の設定保存用にデバイスキー名を生成する。
-	 * ベンダーID, プロダクトID, デバイスクラス, デバイスサブクラス, デバイスプロトコルから生成
-	 * 同種の製品だと同じキー名になるので注意
-	 * @param device nullなら空文字列を返す
+	 * 生成设备密钥名称以保存每个USB设备的设置。
+	 * 请注意，相同的键名称将用于由供应商ID，产品ID，设备类，设备子类和设备协议生成的相同类型的产品。
+	 * @param device 如果为null，则返回一个空字符串
 	 * @return
 	 */
 	public static final String getDeviceKeyName(final UsbDevice device) {
@@ -625,8 +629,8 @@ public final class USBMonitor {
 	}
 
 	/**
-	 * USB機器毎の設定保存用にデバイスキー名を生成する。
-	 * useNewAPI=falseで同種の製品だと同じデバイスキーになるので注意
+	 * 生成设备密钥名称以保存每个USB设备的设置。
+	 * 请注意，useNewAPI = false将导致相似产品使用相同的设备密钥
 	 * @param device
 	 * @param useNewAPI
 	 * @return
@@ -635,14 +639,14 @@ public final class USBMonitor {
 		return getDeviceKeyName(device, null, useNewAPI);
 	}
 	/**
-	 * USB機器毎の設定保存用にデバイスキー名を生成する。この機器名をHashMapのキーにする
-	 * UsbDeviceがopenしている時のみ有効
-	 * ベンダーID, プロダクトID, デバイスクラス, デバイスサブクラス, デバイスプロトコルから生成
-	 * serialがnullや空文字でなければserialを含めたデバイスキー名を生成する
-	 * useNewAPI=trueでAPIレベルを満たしていればマニュファクチャ名, バージョン, コンフィギュレーションカウントも使う
-	 * @param device nullなら空文字列を返す
-	 * @param serial	UsbDeviceConnection#getSerialで取得したシリアル番号を渡す, nullでuseNewAPI=trueでAPI>=21なら内部で取得
-	 * @param useNewAPI API>=21またはAPI>=23のみで使用可能なメソッドも使用する(ただし機器によってはnullが返ってくるので有効かどうかは機器による)
+	 * 生成设备密钥名称以保存每个USB设备的设置。 使用此设备名称作为HashMap的密钥
+	 * 仅在打开UsbDevice时有效
+	 * 由供应商ID，产品ID，设备类别，设备子类别，设备协议生成
+	 * 如果serial不为null或为空，则生成包括序列号在内的设备密钥名称
+	 * 如果useNewAPI = true满足API级别，则还将使用制造商名称，版本和配置计数
+	 * @param device 如果为null，则返回一个空字符串
+	 * @param serial	传递由UsbDeviceConnection＃getSerial获得的序列号，如果为null，则useNewAPI = true，API> = 21，在内部获取
+	 * @param useNewAPI 还要使用仅适用于API> = 21或API> = 23的方法（但是，返回的值取决于设备，因此有效性取决于设备）
 	 * @return
 	 */
 	@SuppressLint("NewApi")
@@ -657,27 +661,21 @@ public final class USBMonitor {
 		if (!TextUtils.isEmpty(serial)) {
 			sb.append("#");	sb.append(serial);
 		}
-		if (useNewAPI && BuildCheck.isAndroid5()) {
+		if (useNewAPI) {
 			sb.append("#");
-			if (TextUtils.isEmpty(serial)) {
-				sb.append(device.getSerialNumber());	sb.append("#");	// API >= 21
-			}
 			sb.append(device.getManufacturerName());	sb.append("#");	// API >= 21
 			sb.append(device.getConfigurationCount());	sb.append("#");	// API >= 21
-			if (BuildCheck.isMarshmallow()) {
-				sb.append(device.getVersion());			sb.append("#");	// API >= 23
-			}
+			sb.append(device.getVersion());				sb.append("#");	// API >= 23
 		}
 //		if (DEBUG) Log.v(TAG, "getDeviceKeyName:" + sb.toString());
 		return sb.toString();
 	}
 
 	/**
-	 * デバイスキーを整数として取得
-	 * getDeviceKeyNameで得られる文字列のhasCodeを取得
-	 * ベンダーID, プロダクトID, デバイスクラス, デバイスサブクラス, デバイスプロトコルから生成
-	 * 同種の製品だと同じデバイスキーになるので注意
-	 * @param device nullなら0を返す
+	 * 获取设备密钥为整数
+	 * 获取由getDeviceKeyName获得的字符串的hasCode
+	 * 请注意，相同的设备密钥是根据由供应商ID，产品ID，设备类，设备子类和设备协议生成的相同类型的产品生成的。
+	 * @param device 如果为null，则返回0
 	 * @return
 	 */
 	public static final int getDeviceKey(final UsbDevice device) {
@@ -685,9 +683,9 @@ public final class USBMonitor {
 	}
 
 	/**
-	 * デバイスキーを整数として取得
-	 * getDeviceKeyNameで得られる文字列のhasCodeを取得
-	 * useNewAPI=falseで同種の製品だと同じデバイスキーになるので注意
+	 * 获取设备密钥为整数
+	 * 获取由getDeviceKeyName获得的字符串的hasCode
+	 * 请注意，useNewAPI = false将导致相似产品使用相同的设备密钥
 	 * @param device
 	 * @param useNewAPI
 	 * @return
@@ -697,12 +695,12 @@ public final class USBMonitor {
 	}
 
 	/**
-	 * デバイスキーを整数として取得
-	 * getDeviceKeyNameで得られる文字列のhasCodeを取得
-	 * serialがnullでuseNewAPI=falseで同種の製品だと同じデバイスキーになるので注意
-	 * @param device nullなら0を返す
-	 * @param serial UsbDeviceConnection#getSerialで取得したシリアル番号を渡す, nullでuseNewAPI=trueでAPI>=21なら内部で取得
-	 * @param useNewAPI API>=21またはAPI>=23のみで使用可能なメソッドも使用する(ただし機器によってはnullが返ってくるので有効かどうかは機器による)
+	 * 获取设备密钥为整数
+	 * 获取由getDeviceKeyName获得的字符串的hasCode
+	 * 请注意，如果serial为null且useNewAPI = false，则如果是类似产品，它将是相同的设备密钥。
+	 * @param device 如果为null，则返回0
+	 * @param serial 传递由UsbDeviceConnection＃getSerial获得的序列号，如果为null，则useNewAPI = true，API> = 21，在内部获取
+	 * @param useNewAPI 还要使用仅适用于API> = 21或API> = 23的方法（但是，返回的值取决于设备，因此有效性取决于设备）
 	 * @return
 	 */
 	public static final int getDeviceKey(final UsbDevice device, final String serial, final boolean useNewAPI) {
@@ -823,7 +821,7 @@ public final class USBMonitor {
 	private static final int USB_DT_DEVICE_SIZE = 18;
 
 	/**
-	 * 指定したIDのStringディスクリプタから文字列を取得する。取得できなければnull
+	 * 从具有指定ID的字符串描述符中提取一个字符串。 如果未获得，则为null
 	 * @param connection
 	 * @param id
 	 * @param languageCount
@@ -856,7 +854,7 @@ public final class USBMonitor {
 	}
 
 	/**
-	 * ベンダー名・製品名・バージョン・シリアルを取得する
+	 * 获取供应商名称/产品名称/版本/序列号
 	 * @param device
 	 * @return
 	 */
@@ -865,7 +863,7 @@ public final class USBMonitor {
 	}
 
 	/**
-	 * ベンダー名・製品名・バージョン・シリアルを取得する
+	 * 获取供应商名称/产品名称/版本/序列号
 	 * #updateDeviceInfo(final UsbManager, final UsbDevice, final UsbDeviceInfo)のヘルパーメソッド
 	 * @param context
 	 * @param device
@@ -876,7 +874,7 @@ public final class USBMonitor {
 	}
 
 	/**
-	 * ベンダー名・製品名・バージョン・シリアルを取得する
+	 * 获取供应商名称/产品名称/版本/序列号
 	 * @param manager
 	 * @param device
 	 * @param _info
@@ -887,14 +885,10 @@ public final class USBMonitor {
 		info.clear();
 
 		if (device != null) {
-			if (BuildCheck.isLollipop()) {
-				info.manufacturer = device.getManufacturerName();
-				info.product = device.getProductName();
-				info.serial = device.getSerialNumber();
-			}
-			if (BuildCheck.isMarshmallow()) {
-				info.usb_version = device.getVersion();
-			}
+			info.manufacturer = device.getManufacturerName();
+			info.product = device.getProductName();
+			info.serial = device.getSerialNumber();
+			info.usb_version = device.getVersion();
 			if ((manager != null) && manager.hasPermission(device)) {
 				final UsbDeviceConnection connection = manager.openDevice(device);
 				final byte[] desc = connection.getRawDescriptors();
@@ -953,7 +947,7 @@ public final class USBMonitor {
 	 * never reuse the instance when it closed
 	 */
 	public static final class UsbControlBlock implements Cloneable {
-		private final WeakReference<USBMonitor> mWeakMonitor;
+		private final WeakReference<LibUVCCameraUSBMonitor> mWeakMonitor;
 		private final WeakReference<UsbDevice> mWeakDevice;
 		protected UsbDeviceConnection mConnection;
 		protected final UsbDeviceInfo mInfo;
@@ -966,9 +960,9 @@ public final class USBMonitor {
 		 * @param monitor
 		 * @param device
 		 */
-		private UsbControlBlock(final USBMonitor monitor, final UsbDevice device) {
+		private UsbControlBlock(final LibUVCCameraUSBMonitor monitor, final UsbDevice device) {
 			if (DEBUG) Log.i(TAG, "UsbControlBlock:constructor");
-			mWeakMonitor = new WeakReference<USBMonitor>(monitor);
+			mWeakMonitor = new WeakReference<LibUVCCameraUSBMonitor>(monitor);
 			mWeakDevice = new WeakReference<UsbDevice>(device);
 			mConnection = monitor.mUsbManager.openDevice(device);
 			mInfo = updateDeviceInfo(monitor.mUsbManager, device, null);
@@ -999,7 +993,7 @@ public final class USBMonitor {
 		 * @throws IllegalStateException
 		 */
 		private UsbControlBlock(final UsbControlBlock src) throws IllegalStateException {
-			final USBMonitor monitor = src.getUSBMonitor();
+			final LibUVCCameraUSBMonitor monitor = src.getUSBMonitor();
 			final UsbDevice device = src.getDevice();
 			if (device == null) {
 				throw new IllegalStateException("device may already be removed");
@@ -1009,11 +1003,11 @@ public final class USBMonitor {
 				throw new IllegalStateException("device may already be removed or have no permission");
 			}
 			mInfo = updateDeviceInfo(monitor.mUsbManager, device, null);
-			mWeakMonitor = new WeakReference<USBMonitor>(monitor);
+			mWeakMonitor = new WeakReference<LibUVCCameraUSBMonitor>(monitor);
 			mWeakDevice = new WeakReference<UsbDevice>(device);
 			mBusNum = src.mBusNum;
 			mDevNum = src.mDevNum;
-			// FIXME USBMonitor.mCtrlBlocksに追加する(今はHashMapなので追加すると置き換わってしまうのでだめ, ListかHashMapにListをぶら下げる?)
+			// FIXME 将其添加到USBMonitor.mCtrlBlocks（现在它是一个HashMap，因此如果添加它，它将被替换，因此将List挂在List或HashMap上？）
 		}
 
 		/**
@@ -1034,7 +1028,7 @@ public final class USBMonitor {
 			return ctrlblock;
 		}
 
-		public USBMonitor getUSBMonitor() {
+		public LibUVCCameraUSBMonitor getUSBMonitor() {
 			return mWeakMonitor.get();
 		}
 
@@ -1065,7 +1059,7 @@ public final class USBMonitor {
 		 * @return same value if the devices has same vendor id, product id, device class, device subclass and device protocol
 		 */
 		public String getDeviceKeyName() {
-			return USBMonitor.getDeviceKeyName(mWeakDevice.get());
+			return LibUVCCameraUSBMonitor.getDeviceKeyName(mWeakDevice.get());
 		}
 
 		/**
@@ -1076,7 +1070,7 @@ public final class USBMonitor {
 		 */
 		public String getDeviceKeyName(final boolean useNewAPI) throws IllegalStateException {
 			if (useNewAPI) checkConnection();
-			return USBMonitor.getDeviceKeyName(mWeakDevice.get(), mInfo.serial, useNewAPI);
+			return LibUVCCameraUSBMonitor.getDeviceKeyName(mWeakDevice.get(), mInfo.serial, useNewAPI);
 		}
 
 		/**
@@ -1086,7 +1080,7 @@ public final class USBMonitor {
 		 */
 		public int getDeviceKey() throws IllegalStateException {
 			checkConnection();
-			return USBMonitor.getDeviceKey(mWeakDevice.get());
+			return LibUVCCameraUSBMonitor.getDeviceKey(mWeakDevice.get());
 		}
 
 		/**
@@ -1097,7 +1091,7 @@ public final class USBMonitor {
 		 */
 		public int getDeviceKey(final boolean useNewAPI) throws IllegalStateException {
 			if (useNewAPI) checkConnection();
-			return USBMonitor.getDeviceKey(mWeakDevice.get(), mInfo.serial, useNewAPI);
+			return LibUVCCameraUSBMonitor.getDeviceKey(mWeakDevice.get(), mInfo.serial, useNewAPI);
 		}
 
 		/**
@@ -1106,7 +1100,7 @@ public final class USBMonitor {
 		 * @return
 		 */
 		public String getDeviceKeyNameWithSerial() {
-			return USBMonitor.getDeviceKeyName(mWeakDevice.get(), mInfo.serial, false);
+			return LibUVCCameraUSBMonitor.getDeviceKeyName(mWeakDevice.get(), "", false);
 		}
 
 		/**
@@ -1307,7 +1301,7 @@ public final class USBMonitor {
 				mInterfaces.clear();
 				mConnection.close();
 				mConnection = null;
-				final USBMonitor monitor = mWeakMonitor.get();
+				final LibUVCCameraUSBMonitor monitor = mWeakMonitor.get();
 				if (monitor != null) {
 					if (monitor.mOnDeviceConnectListener != null) {
 						monitor.mOnDeviceConnectListener.onDisconnect(mWeakDevice.get(), UsbControlBlock.this);

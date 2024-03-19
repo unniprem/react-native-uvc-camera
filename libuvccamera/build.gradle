@@ -35,7 +35,7 @@ android {
 	}
 
     defaultConfig {
-        minSdkVersion 18
+   	minSdkVersion 23
 		targetSdkVersion versionTarget
     }
 
@@ -48,9 +48,10 @@ android {
 	sourceSets {
 		main {
 			jniLibs.srcDir 'src/main/libs'
-			jni.srcDirs = []
 		}
 	}
+	namespace 'com.serenegiant.uvccamera'
+	ndkVersion ndkVersion
 }
 
 tasks.withType(JavaCompile) {
@@ -87,8 +88,10 @@ clean.dependsOn 'ndkClean'
 dependencies {
     implementation fileTree(dir: new File(buildDir, 'libs'), include: '*.jar')
 
-	implementation "androidx.legacy:legacy-support-v4:${supportLibVersion}"
-	implementation "androidx.annotation:annotation:${supportLibVersion}"
+	implementation "com.android.support:support-v4:${supportLibVersion}"
+	implementation "com.android.support:support-annotations:${supportLibVersion}"
 
-	implementation "com.serenegiant:common:$commonLibVersion"
+	implementation("com.serenegiant:common:${commonLibVersion}") {
+		exclude module: 'support-v4'
+	}
 }

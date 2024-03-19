@@ -37,12 +37,14 @@ import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 public class MediaMuxerWrapper {
 	private static final boolean DEBUG = true;	// TODO set false on release
 	private static final String TAG = "MediaMuxerWrapper";
 
+	private static final SimpleDateFormat mDateTimeFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US);
 	private static final String DIR_NAME = "USBCamera";
-    private static final SimpleDateFormat mDateTimeFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US);
 
 	private String mOutputPath;
 	private final MediaMuxer mMediaMuxer;	// API >= 18
@@ -52,13 +54,15 @@ public class MediaMuxerWrapper {
 
 	/**
 	 * Constructor
+	 * @param dir direction of output file
+	 * @param filename name of output file
 	 * @param ext extension of output file
 	 * @throws IOException
 	 */
-	public MediaMuxerWrapper(String ext) throws IOException {
+	public MediaMuxerWrapper(String dir, @Nullable String filename, @Nullable String ext) throws IOException {
 		if (TextUtils.isEmpty(ext)) ext = ".mp4";
 		try {
-			mOutputPath = getCaptureFile(Environment.DIRECTORY_MOVIES, ext).toString();
+			mOutputPath = getCaptureFile(Environment.DIRECTORY_MOVIES, ext, dir, filename).toString();
 		} catch (final NullPointerException e) {
 			throw new RuntimeException("This app has no permission of writing external storage");
 		}
@@ -131,13 +135,13 @@ public class MediaMuxerWrapper {
 	 * @return true when muxer is ready to write
 	 */
 	/*package*/ synchronized boolean start() {
-		if (DEBUG) Log.v(TAG,  "start:");
+		if (DEBUG) { Log.v(TAG,  "start:"); }
 		mStatredCount++;
 		if ((mEncoderCount > 0) && (mStatredCount == mEncoderCount)) {
 			mMediaMuxer.start();
 			mIsStarted = true;
 			notifyAll();
-			if (DEBUG) Log.v(TAG,  "MediaMuxer started:");
+			if (DEBUG) { Log.v(TAG,  "MediaMuxer started:"); }
 		}
 		return mIsStarted;
 	}
@@ -146,7 +150,7 @@ public class MediaMuxerWrapper {
 	 * request stop recording from encoder when encoder received EOS
 	*/
 	/*package*/ synchronized void stop() {
-		if (DEBUG) Log.v(TAG,  "stop:mStatredCount=" + mStatredCount);
+		if (DEBUG) { Log.v(TAG,  "stop:mStatredCount=" + mStatredCount); }
 		mStatredCount--;
 		if ((mEncoderCount > 0) && (mStatredCount <= 0)) {
 			try {
@@ -155,7 +159,7 @@ public class MediaMuxerWrapper {
 				Log.w(TAG, e);
 			}
 			mIsStarted = false;
-			if (DEBUG) Log.v(TAG,  "MediaMuxer stopped:");
+			if (DEBUG) { Log.v(TAG,  "MediaMuxer stopped:"); }
 		}
 	}
 
@@ -185,21 +189,28 @@ public class MediaMuxerWrapper {
 
 //**********************************************************************
 //**********************************************************************
-    /**
-     * generate output file
-     * @param type Environment.DIRECTORY_MOVIES / Environment.DIRECTORY_DCIM etc.
-     * @param ext .mp4(.m4a for audio) or .png
-     * @return return null when this app has no writing permission to external storage.
-     */
-    public static final File getCaptureFile(final String type, final String ext) {
-		final File dir = new File(Environment.getExternalStoragePublicDirectory(type), DIR_NAME);
+
+	public static final File getCaptureFile(final String type, final String ext) {
+		return getCaptureFile(type, ext, null, null);
+	}
+	/**
+	 * generate output file
+	 * @param type Environment.DIRECTORY_MOVIES / Environment.DIRECTORY_DCIM etc.
+	 * @param ext .mp4(.m4a for audio) or .png
+	 * @param filename filename for
+	 * @return return null when this app has no writing permission to external storage.
+	 */
+	public static final File getCaptureFile(final String type, final String ext, @Nullable String dirname, @Nullable String filename) {
+		if (TextUtils.isEmpty(dirname)) dirname = DIR_NAME;
+		if (TextUtils.isEmpty(filename)) filename = getDateTimeString();
+		final File dir = new File(Environment.getExternalStoragePublicDirectory(type), dirname);
 		Log.d(TAG, "path=" + dir.toString());
 		dir.mkdirs();
-        if (dir.canWrite()) {
-        	return new File(dir, getDateTimeString() + ext);
-        }
-    	return null;
-    }
+		if (dir.canWrite()) {
+			return new File(dir, filename + ext);
+		}
+		return null;
+	}
 
     /**
      * get current date and time as String

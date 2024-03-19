@@ -25,7 +25,7 @@ package com.serenegiant.usbcameracommon;
 
 import android.app.Activity;
 
-import com.serenegiant.usb.UVCCamera;
+import com.serenegiant.usb_libuvccamera.UVCCamera;
 import com.serenegiant.widget.CameraViewInterface;
 
 public class UVCCameraHandler extends AbstractUVCCameraHandler {
