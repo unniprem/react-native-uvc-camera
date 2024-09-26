@@ -34,7 +34,7 @@ import android.view.TextureView;
  * XXX it is better that can set the aspect ratio as xml property
  */
 public class AspectRatioTextureView extends TextureView	// API >= 14
-	implements IAspectRatioView {
+	implements IAspectRatioInterface {
 
 	private static final boolean DEBUG = true;	// TODO set false on release
 	private static final String TAG = "AbstractCameraView";

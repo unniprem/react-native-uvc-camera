@@ -48,7 +48,7 @@ public class TextRecognizerAsyncTask extends android.os.AsyncTask<Void, Void, Sp
     super.onPostExecute(textBlocks);
 
     if (textBlocks != null) {
-      mDelegate.onTextRecognized(textBlocks, mWidth, mHeight, mRotation);
+//      mDelegate.onTextRecognized(textBlocks, mWidth, mHeight, mRotation);
     }
     mDelegate.onTextRecognizerTaskCompleted();
   }

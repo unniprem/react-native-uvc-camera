@@ -43,6 +43,7 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
+import android.os.Build; //added 
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
@@ -50,6 +51,7 @@ import android.util.SparseArray;
 
 import com.serenegiant.utils.BuildCheck;
 import com.serenegiant.utils.HandlerThreadHandler;
+
 
 public final class USBMonitor {
 
@@ -61,9 +63,9 @@ public final class USBMonitor {
 
 	public static final String ACTION_USB_DEVICE_ATTACHED = "android.hardware.usb.action.USB_DEVICE_ATTACHED";
 
-	/**
-	 * openしているUsbControlBlock
-	 */
+		/**
+		 * openしているUsbControlBlock
+		 */
 	private final ConcurrentHashMap<UsbDevice, UsbControlBlock> mCtrlBlocks = new ConcurrentHashMap<UsbDevice, UsbControlBlock>();
 	private final SparseArray<WeakReference<UsbDevice>> mHasPermissions = new SparseArray<WeakReference<UsbDevice>>();
 
@@ -167,7 +169,13 @@ public final class USBMonitor {
 			if (DEBUG) Log.i(TAG, "register:");
 			final Context context = mWeakContext.get();
 			if (context != null) {
-				mPermissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
+				// mPermissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
+				mPermissionIntent = PendingIntent.getBroadcast(
+						context,
+						0,
+						new Intent(ACTION_USB_PERMISSION),
+						(Build.VERSION.SDK_INT >= 31) ? PendingIntent.FLAG_MUTABLE : 0
+				);
 				final IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
 				// ACTION_USB_DEVICE_ATTACHED never comes on some devices so it should not be added here
 				filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
@@ -659,9 +667,9 @@ public final class USBMonitor {
 		}
 		if (useNewAPI && BuildCheck.isAndroid5()) {
 			sb.append("#");
-			if (TextUtils.isEmpty(serial)) {
-				sb.append(device.getSerialNumber());	sb.append("#");	// API >= 21
-			}
+			// if (TextUtils.isEmpty(serial)) {
+			// 	sb.append(device.getSerialNumber());	sb.append("#");	// API >= 21
+			// }
 			sb.append(device.getManufacturerName());	sb.append("#");	// API >= 21
 			sb.append(device.getConfigurationCount());	sb.append("#");	// API >= 21
 			if (BuildCheck.isMarshmallow()) {

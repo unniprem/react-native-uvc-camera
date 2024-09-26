@@ -30,6 +30,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
 import com.facebook.react.uimanager.ThemedReactContext;
+import com.serenegiant.usb.DeviceFilter;
 import com.serenegiant.usbcameracommon.UVCCameraHandler;
 import com.serenegiant.usb.CameraDialog;
 import com.serenegiant.usb.USBMonitor;
@@ -39,6 +40,8 @@ import com.serenegiant.usb.UVCCamera;
 import com.serenegiant.widget.UVCCameraTextureView;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Set;
 
 @SuppressWarnings("MissingPermission")
@@ -123,15 +126,20 @@ class CameraUvc extends CameraViewImpl {
             Matrix matrix = new Matrix();
             int width = bitmap.getWidth();
             int height = bitmap.getHeight();
+
             if (mDisplayOrientation % 180 == 90) {
                 matrix.postScale((float) height / (float) width, (float) width / (float) height);
                 matrix.postRotate(mDisplayOrientation - 180);
             }
             Bitmap bmp = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
-            // if (mImageFormat == ImageFormat.JPEG) {
+
+            // if (mImageFormat == ImageFormat.JPEG) {8
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                ByteBuffer buffer =  ByteBuffer.wrap(baos.toByteArray());
+
                 mCallback.onPictureTaken(baos.toByteArray());
+                mCallback.onFramePreview(bmp, bmp.getWidth(), bmp.getHeight(), 0);
             // } else { // TODO: convert bmp to ImageFormat.YUV_420_888 ?
             //     mCallback.onFramePreview(bmp, bmp.getWidth(), bmp.getHeight(), mDisplayOrientation);
             // }
@@ -142,8 +150,21 @@ class CameraUvc extends CameraViewImpl {
         }
         @Override
         public void onError(final Exception e){
-            Toast.makeText(mContext.getCurrentActivity(), "errorException: " + e, Toast.LENGTH_SHORT).show();
+//            Toast.makeText(mContext.getCurrentActivity(), "errorException: " + e, Toast.LENGTH_SHORT).show();
             Log.e(TAG, "errorException: ", e);
+        }
+
+        @Override
+        public void onPreviewFrame(Bitmap bitmap, int mWidth, int mHeight, int orientation) {
+            int width = bitmap.getWidth();
+            int height = bitmap.getHeight();
+            Matrix matrix = new Matrix();
+            if (mDisplayOrientation % 180 == 90) {
+                matrix.postScale((float) height / (float) width, (float) width / (float) height);
+                matrix.postRotate(mDisplayOrientation - 180);
+            }
+            Bitmap bmp = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
+            mCallback.onFramePreview(bmp, bmp.getWidth(), bmp.getHeight(), 90);
         }
     };
 
@@ -191,29 +212,62 @@ class CameraUvc extends CameraViewImpl {
         mImageFormat = mIsScanning ? ImageFormat.YUV_420_888 : ImageFormat.JPEG;
         mPreview.setCallback(new PreviewImpl.Callback() {
             @Override
-            public void onSurfaceChanged() {
+            public void onSurfaceChanged(Surface  surface) {
                 // if (mCameraHandler.isPreviewing()) {
                 //     if (mUVCCameraView != null)
                 //         mUVCCameraView.onPause();
                 //     stop();
                 //     // stopCaptureSession();
                 // }
-                startCaptureSession();
+                if (!isCameraOpened() || surface == null) {
+                    return;
+                }
+                mCameraHandler.startPreview(surface);
+//                startCaptureSession();
             }
 
             @Override
             public void onSurfaceDestroyed() {
-                stop();
+                Log.d("AMPA", "DESTROYING SURFACE");
+                mUSBMonitor.unregister();
+                if(mCtrlBlock != null) {
+                    mCtrlBlock.close();
+                }
+//                stop();
             }
         });
+    }
+
+    private UsbDevice getFirstCameraDevice() {
+        List<DeviceFilter> filter = DeviceFilter.getDeviceFilters(mContext.getCurrentActivity(), com.serenegiant.uvccamera.R.xml.device_filter);
+        List<UsbDevice> cameraList =  mUSBMonitor.getDeviceList(filter.get(0));
+        if(cameraList.isEmpty()) {
+//            Toast.makeText(mContext.getCurrentActivity(), "No Cameras Found", Toast.LENGTH_SHORT).show();
+            return null;
+        }
+        UsbDevice firstCameraDevice = cameraList.get(0);
+        return firstCameraDevice;
+    }
+
+    private  void requestCameraPermission(UsbDevice device) {
+        if(mUSBMonitor != null && device != null) {
+            mUSBMonitor.requestPermission(device);
+        }
     }
 
     private final OnDeviceConnectListener mOnDeviceConnectListener = new OnDeviceConnectListener() {
         @Override
         public void onAttach(final UsbDevice device) {
             // Toast.makeText(mContext.getCurrentActivity(), "USB_DEVICE_ATACHED", Toast.LENGTH_SHORT).show();
+//            if(mCameraHandler == null) {
+//                mCameraHandler = UVCCameraHandler.createHandler(mContext.getCurrentActivity(), mUVCCameraView,
+//                        USE_SURFACE_ENCODER ? 0 : 1, PREVIEW_WIDTH, PREVIEW_HEIGHT, PREVIEW_MODE);
+//                mCameraHandler.addCallback(mCameraDeviceCallback);
+//            }
             if (!mCameraHandler.isOpened()) {
-                CameraDialog.showDialog(mContext.getCurrentActivity(), mUSBMonitor);
+//              CameraDialog.showDialog(mContext.getCurrentActivity(), mUSBMonitor);
+                UsbDevice camera =  getFirstCameraDevice();
+                requestCameraPermission(camera);
             }
         }
 
@@ -226,7 +280,8 @@ class CameraUvc extends CameraViewImpl {
 
         @Override
         public void onDisconnect(final UsbDevice device, final UsbControlBlock ctrlBlock) {
-            Toast.makeText(mContext.getCurrentActivity(), "onDisconnect", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(mContext.getCurrentActivity(), "onDisconnect", Toast.LENGTH_SHORT).show();
+            Log.d("AMPA", "OnDisconnect");
             if (mCameraHandler != null) {
                 Handler handler = new Handler(Looper.getMainLooper());
                 handler.postDelayed(new Runnable() {
@@ -236,6 +291,8 @@ class CameraUvc extends CameraViewImpl {
                             stopCaptureSession();
                         }
                         mCameraHandler.close();
+//                        mCameraHandler.release();
+//                        mCameraHandler = null;
                     }
                 }, 0);
             }
@@ -243,12 +300,13 @@ class CameraUvc extends CameraViewImpl {
 
         @Override
         public void onDettach(final UsbDevice device) {
-            Toast.makeText(mContext.getCurrentActivity(), "USB_DEVICE_DETACHED", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(mContext.getCurrentActivity(), "USB_DEVICE_DETACHED", Toast.LENGTH_SHORT).show();
         }
 
         @Override
         public void onCancel(final UsbDevice device) {}
     };
+
 
     @Override
     boolean start() {
@@ -270,6 +328,16 @@ class CameraUvc extends CameraViewImpl {
         //     mUVCCameraView.onResume();
 
         return true;
+    }
+
+    @Override
+    void registerUsbMonitor() {
+        if(mUSBMonitor == null) {
+            return;
+        }
+        if(!mUSBMonitor.isRegistered())  {
+            mUSBMonitor.register();
+        }
     }
 
     @Override
@@ -300,6 +368,9 @@ class CameraUvc extends CameraViewImpl {
 
     @Override
     boolean isCameraOpened() {
+        if(mCameraHandler == null) {
+            return false;
+        }
         return mCameraHandler.isOpened();
     }
 
@@ -497,7 +568,7 @@ class CameraUvc extends CameraViewImpl {
      * <p>Starts a capture session for camera preview.</p>
      */
     void startCaptureSession() {
-        if (!isCameraOpened() || !mPreview.isReady()) {
+        if (!isCameraOpened()) {
             return;
         }
         mCameraHandler.startPreview(getPreviewSurface());

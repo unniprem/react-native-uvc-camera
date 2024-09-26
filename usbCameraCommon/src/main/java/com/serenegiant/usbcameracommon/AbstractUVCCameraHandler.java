@@ -26,7 +26,12 @@ package com.serenegiant.usbcameracommon;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
+import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.graphics.YuvImage;
 import android.hardware.usb.UsbDevice;
 import android.media.AudioManager;
 import android.media.MediaScannerConnection;
@@ -54,6 +59,7 @@ import com.serenegiant.usb.UVCCamera;
 import com.serenegiant.widget.CameraViewInterface;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -70,6 +76,8 @@ abstract class AbstractUVCCameraHandler extends Handler {
 	private static final boolean DEBUG = true;	// TODO set false on release
 	private static final String TAG = "AbsUVCCameraHandler";
 
+	private static final int FRAME_DELAY = 500;
+
 	public interface CameraCallback {
 		public void onOpen();
 		public void onClose();
@@ -80,6 +88,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		public void onPictureTaken(Bitmap bitmap);
 		public void onVideoRecorded(String path);
 		public void onError(final Exception e);
+		public void onPreviewFrame(Bitmap data, int width, int height, int orientation);
 	}
 
 	private static final int MSG_OPEN = 0;
@@ -216,7 +225,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 
 	public void release() {
 		mReleased = true;
-		close();
+//		close();
 		sendEmptyMessage(MSG_RELEASE);
 	}
 
@@ -413,6 +422,8 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		private MediaMuxerWrapper mMuxer;
 		private MediaVideoBufferEncoder mVideoEncoder;
 
+		private long lastFrameProcessedTime;
+
 		/**
 		 *
 		 * @param clazz Class extends AbstractUVCCameraHandler
@@ -496,7 +507,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 
 		public void handleOpen(final USBMonitor.UsbControlBlock ctrlBlock) {
 			if (DEBUG) Log.v(TAG_THREAD, "handleOpen:");
-			handleClose();
+//			handleClose();
 			try {
 				final UVCCamera camera = new UVCCamera();
 				camera.open(ctrlBlock);
@@ -519,14 +530,27 @@ abstract class AbstractUVCCameraHandler extends Handler {
 				mUVCCamera = null;
 			}
 			if (camera != null) {
-				camera.stopPreview();
-				camera.destroy();
-				callOnClose();
+				try {
+					Log.d("AMPA",  "handleCLose Step:stopPreview()");
+					camera.stopPreview();
+					Log.d("AMPA",  "handleCLose Step:close()");
+					camera.close();
+					Log.d("AMPA",  "handleCLose Step:destroy()");
+					camera.destroy();
+					Log.d("AMPA",  "handleCLose Step:callOnClose()");
+					callOnClose();
+				}catch(Exception  e) {
+					Log.d("AMPA", e.toString());
+				}
+				if (DEBUG) Log.v(TAG_THREAD, "called camera.stopPreview,close,destroy:");
 			}
+			if (DEBUG) Log.v(TAG_THREAD, "Finished camera.stopPreview,close,destroy:");
 		}
 
 		public void handleStartPreview(final Object surface) {
-			if (DEBUG) Log.v(TAG_THREAD, "handleStartPreview:");
+			if (DEBUG) Log.v(TAG_THREAD, "handleStartPreview:"+mWidth);
+			if (DEBUG) Log.v(TAG_THREAD, "handleStartPreview:"+mHeight);
+
 			if ((mUVCCamera == null) || mIsPreviewing) return;
 			try {
 				Size nearestSize = mUVCCamera.getNearestSize(mWidth, mHeight, UVCCamera.FRAME_FORMAT_MJPEG);
@@ -558,6 +582,8 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			}
 			mUVCCamera.startPreview();
 			mUVCCamera.updateCameraParams();
+			mUVCCamera.setFrameCallback(mIFramePreviewCallback, UVCCamera.PIXEL_FORMAT_RAW);
+
 			synchronized (mSync) {
 				mIsPreviewing = true;
 			}
@@ -682,6 +708,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 				// you should not wait here
 				callOnStopRecording();
 			}
+			if (DEBUG) Log.v(TAG_THREAD, "handleStopRecording:Fineshed");
 		}
 
 		private final IFrameCallback mIFrameCallback = new IFrameCallback() {
@@ -697,6 +724,58 @@ abstract class AbstractUVCCameraHandler extends Handler {
 				}
 			}
 		};
+
+		private final IFrameCallback mIFramePreviewCallback = new IFrameCallback() {
+			@Override
+			public void onFrame(final ByteBuffer frame) {
+				synchronized (mSync) {
+				}
+				if(!shouldProcessFrame()) {
+					return;
+				}
+
+				final Activity parent = mWeakParent.get();
+				if (parent == null) return;
+				try {
+					final Bitmap bitmap = mWeakCameraView.get().captureStillImage();
+					if(bitmap == null) {
+						return;
+					}
+					callOnPreviewFrame(bitmap);
+				} catch (final Exception e) {
+//					callOnError(e);
+				}
+			}
+		};
+
+		private boolean shouldProcessFrame() {
+			long currentTime = System.currentTimeMillis();
+			boolean isTimeThresholdPassed = currentTime - lastFrameProcessedTime >= FRAME_DELAY;
+			if (isTimeThresholdPassed) {
+				lastFrameProcessedTime = currentTime;
+			}
+			return isTimeThresholdPassed;
+		}
+
+		private Bitmap getOutputImage(ByteBuffer output){
+			output.rewind();
+			int outputWidth = 384;
+			int outputHeight = 384;
+			Bitmap bitmap = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888);
+			int [] pixels = new int[outputWidth * outputHeight];
+			for (int i = 0; i < outputWidth * outputHeight; i++) {
+				int a = 0xFF;
+
+				float r = output.getFloat() * 255.0f;
+				float g = output.getFloat() * 255.0f;
+				float b = output.getFloat() * 255.0f;
+
+				pixels[i] = a << 24 | ((int) r << 16) | ((int) g << 8) | (int) b;
+			}
+			bitmap.setPixels(pixels, 0, outputWidth, 0, 0, outputWidth, outputHeight);
+			return bitmap;
+		}
+
 
 		public void handleUpdateMedia(final String path) {
 			if (DEBUG) Log.v(TAG_THREAD, "handleUpdateMedia:path=" + path);
@@ -725,6 +804,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			mCallbacks.clear();
 			if (!mIsRecording) {
 				mHandler.mReleased = true;
+				if (DEBUG) Log.v(TAG_THREAD, "Quiting Lopper Thread");
 				Looper.myLooper().quit();
 			}
 			if (DEBUG) Log.v(TAG_THREAD, "handleRelease:finished");
@@ -924,6 +1004,17 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			for (final CameraCallback callback: mCallbacks) {
 				try {
 					callback.onVideoRecorded(path);
+				} catch (final Exception e) {
+					mCallbacks.remove(callback);
+					Log.w(TAG, e);
+				}
+			}
+		}
+
+		private void callOnPreviewFrame(Bitmap data) {
+			for (final CameraCallback callback: mCallbacks) {
+				try {
+					callback.onPreviewFrame(data, mWidth, mHeight, 0);
 				} catch (final Exception e) {
 					mCallbacks.remove(callback);
 					Log.w(TAG, e);

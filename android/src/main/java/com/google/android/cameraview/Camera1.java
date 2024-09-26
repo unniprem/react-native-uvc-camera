@@ -23,10 +23,13 @@ import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Build;
 import androidx.collection.SparseArrayCompat;
+
+import android.view.Surface;
 import android.view.SurfaceHolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -104,7 +107,7 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
         super(callback, preview);
         preview.setCallback(new PreviewImpl.Callback() {
             @Override
-            public void onSurfaceChanged() {
+            public void onSurfaceChanged(Surface surface) {
                 if (mCamera != null) {
                     setUpPreview();
                     adjustCameraParameters();
@@ -132,6 +135,10 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
         mShowingPreview = true;
         startCameraPreview();
         return true;
+    }
+
+    @Override
+    void registerUsbMonitor() {
     }
 
     @Override
@@ -715,7 +722,7 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         Camera.Size previewSize = mCameraParameters.getPreviewSize();
-        mCallback.onFramePreview(data, previewSize.width, previewSize.height, mDisplayOrientation);
+        mCallback.onFramePreview(null, previewSize.width, previewSize.height, mDisplayOrientation);
     }
 
     private void setUpMediaRecorder(String path, int maxDuration, int maxFileSize, boolean recordAudio, CamcorderProfile profile) {

@@ -115,10 +115,10 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 	public void onSurfaceTextureSizeChanged(final SurfaceTexture surface, final int width, final int height) {
 		if (DEBUG) Log.v(TAG, "onSurfaceTextureSizeChanged:" + surface);
 		if (mRenderHandler != null) {
-			mRenderHandler.resize(width, height);
+//			mRenderHandler.resize(width, height);
 		}
 		if (mCallback != null) {
-			mCallback.onSurfaceChanged(this, getSurface(), width, height);
+			mCallback.onSurfaceChanged(this, new Surface(surface), width, height);
 		}
 	}
 
@@ -173,7 +173,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 		synchronized (mCaptureSync) {
 			mReqesutCaptureStillImage = true;
 			try {
-				mCaptureSync.wait();
+				mCaptureSync.wait(20);
 			} catch (final InterruptedException e) {
 			}
 			return mTempBitmap;
@@ -233,6 +233,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 	public float getTotalFps() {
 		return mFpsCounter.getTotalFps();
 	}
+
 
 	/**
 	 * render camera frames on this view on a private thread

@@ -44,14 +44,14 @@ class TextureViewPreview extends PreviewImpl {
             public void onSurfaceCreated(CameraViewInterface view, Surface surface, int width, int height) {
                 setSize(width, height);
                 configureTransform();
-                dispatchSurfaceChanged();
+                dispatchSurfaceChanged(surface);
             }
 
             @Override
             public void onSurfaceChanged(CameraViewInterface view, Surface surface, int width, int height) {
                 setSize(width, height);
                 configureTransform();
-                dispatchSurfaceChanged();
+                dispatchSurfaceChanged(surface);
             }
 
             @Override

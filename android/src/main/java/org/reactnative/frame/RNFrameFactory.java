@@ -2,6 +2,7 @@ package org.reactnative.frame;
 
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
+import android.util.Log;
 
 import org.reactnative.camera.utils.ImageDimensions;
 import com.google.android.gms.vision.Frame;
@@ -10,9 +11,11 @@ import java.nio.ByteBuffer;
 
 public class RNFrameFactory {
   public static RNFrame buildFrame(byte[] bitmapData, int width, int height, int rotation) {
+    Log.d("IMAGE_RECOGNITION", "Image Recognition buildFrame"+width);
     Frame.Builder builder = new Frame.Builder();
 
     ByteBuffer byteBuffer = ByteBuffer.wrap(bitmapData);
+
     builder.setImageData(byteBuffer, width, height, ImageFormat.NV21);
 
     switch (rotation) {

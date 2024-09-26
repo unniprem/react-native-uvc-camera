@@ -46,6 +46,9 @@
 #define PREVIEW_PIXEL_BYTES 4	// RGBA/RGBX
 #define FRAME_POOL_SZ MAX_FRAME + 2
 
+struct timespec ts;
+struct timeval tv;
+
 UVCPreview::UVCPreview(uvc_device_handle_t *devh)
 :	mPreviewWindow(NULL),
 	mCaptureWindow(NULL),
@@ -72,10 +75,8 @@ UVCPreview::UVCPreview(uvc_device_handle_t *devh)
 	ENTER();
 	pthread_cond_init(&preview_sync, NULL);
 	pthread_mutex_init(&preview_mutex, NULL);
-//
 	pthread_cond_init(&capture_sync, NULL);
 	pthread_mutex_init(&capture_mutex, NULL);
-//	
 	pthread_mutex_init(&pool_mutex, NULL);
 	EXIT();
 }
@@ -719,7 +720,19 @@ uvc_frame_t *UVCPreview::waitCaptureFrame() {
 	pthread_mutex_lock(&capture_mutex);
 	{
 		if (!captureQueu) {
-			pthread_cond_wait(&capture_sync, &capture_mutex);
+			ts.tv_sec = 0;
+                ts.tv_nsec = 0;
+
+            #if _POSIX_TIMERS > 0
+                      clock_gettime(CLOCK_REALTIME, &ts);
+            #else
+                      gettimeofday(&tv, NULL);
+                      ts.tv_sec = tv.tv_sec;
+                      ts.tv_nsec = tv.tv_usec * 1000;
+            #endif
+                      ts.tv_sec += 1;
+                      ts.tv_nsec += 0;
+            pthread_cond_timedwait(&capture_sync, &capture_mutex,&ts);
 		}
 		if (LIKELY(isRunning() && captureQueu)) {
 			frame = captureQueu;

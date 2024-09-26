@@ -27,14 +27,14 @@ public class TextRecognizedEvent extends Event<TextRecognizedEvent> {
 
   private double mScaleX;
   private double mScaleY;
-  private SparseArray<TextBlock> mTextBlocks;
+  private String mTextBlocks;
   private ImageDimensions mImageDimensions;
 
   private TextRecognizedEvent() {}
 
   public static TextRecognizedEvent obtain(
       int viewTag,
-      SparseArray<TextBlock> textBlocks,
+      String textBlocks,
       ImageDimensions dimensions,
       double scaleX,
       double scaleY) {
@@ -48,7 +48,7 @@ public class TextRecognizedEvent extends Event<TextRecognizedEvent> {
 
   private void init(
       int viewTag,
-      SparseArray<TextBlock> textBlocks,
+      String textBlocks,
       ImageDimensions dimensions,
       double scaleX,
       double scaleY) {
@@ -70,19 +70,19 @@ public class TextRecognizedEvent extends Event<TextRecognizedEvent> {
   }
 
   private WritableMap serializeEventData() {
-    WritableArray textBlocksList = Arguments.createArray();
-    for (int i = 0; i < mTextBlocks.size(); ++i) {
-      TextBlock textBlock = mTextBlocks.valueAt(i);
-      WritableMap serializedTextBlock = serializeText(textBlock);
-      if (mImageDimensions.getFacing() == CameraView.FACING_FRONT) {
-        serializedTextBlock = rotateTextX(serializedTextBlock);
-      }
-      textBlocksList.pushMap(serializedTextBlock);
-    }
+//    WritableArray textBlocksList = Arguments.createArray();
+//    for (int i = 0; i < mTextBlocks.size(); ++i) {
+//      TextBlock textBlock = mTextBlocks.valueAt(i);
+//      WritableMap serializedTextBlock = serializeText(textBlock);
+//      if (mImageDimensions.getFacing() == CameraView.FACING_FRONT) {
+//        serializedTextBlock = rotateTextX(serializedTextBlock);
+//      }
+//      textBlocksList.pushMap(serializedTextBlock);
+//    }
 
     WritableMap event = Arguments.createMap();
     event.putString("type", "textBlock");
-    event.putArray("textBlocks", textBlocksList);
+    event.putString("text", mTextBlocks);
     event.putInt("target", getViewTag());
     return event;
   }

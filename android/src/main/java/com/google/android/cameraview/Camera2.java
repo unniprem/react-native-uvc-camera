@@ -178,7 +178,7 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
                     if (image.getFormat() == ImageFormat.JPEG) {
                         mCallback.onPictureTaken(data);
                     } else {
-                        mCallback.onFramePreview(data, image.getWidth(), image.getHeight(), mDisplayOrientation);
+                        mCallback.onFramePreview(null, image.getWidth(), image.getHeight(), mDisplayOrientation);
                     }
                     image.close();
                 }
@@ -259,7 +259,7 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
         mImageFormat = mIsScanning ? ImageFormat.YUV_420_888 : ImageFormat.JPEG;
         mPreview.setCallback(new PreviewImpl.Callback() {
             @Override
-            public void onSurfaceChanged() {
+            public void onSurfaceChanged(Surface surface) {
                 startCaptureSession();
             }
 
@@ -283,6 +283,11 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
         prepareScanImageReader();
         startOpeningCamera();
         return true;
+    }
+
+    @Override
+    void registerUsbMonitor() {
+
     }
 
     @Override

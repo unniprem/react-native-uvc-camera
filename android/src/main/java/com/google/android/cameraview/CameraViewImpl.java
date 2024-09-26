@@ -16,10 +16,12 @@
 
 package com.google.android.cameraview;
 
+import android.graphics.Bitmap;
 import android.media.CamcorderProfile;
 import android.view.View;
 import android.graphics.SurfaceTexture;
 
+import java.nio.ByteBuffer;
 import java.util.Set;
 
 abstract class CameraViewImpl {
@@ -41,6 +43,8 @@ abstract class CameraViewImpl {
      * @return {@code true} if the implementation was able to start the camera session.
      */
     abstract boolean start();
+
+    abstract void registerUsbMonitor();
 
     abstract void stop();
 
@@ -108,7 +112,7 @@ abstract class CameraViewImpl {
 
         void onVideoRecorded(String path);
 
-        void onFramePreview(byte[] data, int width, int height, int orientation);
+        void onFramePreview(Bitmap data, int width, int height, int orientation);
 
         void onMountError();
     }

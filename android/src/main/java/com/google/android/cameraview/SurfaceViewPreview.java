@@ -45,7 +45,7 @@ class SurfaceViewPreview extends PreviewImpl {
             public void surfaceChanged(SurfaceHolder h, int format, int width, int height) {
                 setSize(width, height);
                 if (!ViewCompat.isInLayout(mSurfaceView)) {
-                    dispatchSurfaceChanged();
+                    dispatchSurfaceChanged(null);
                 }
             }
 

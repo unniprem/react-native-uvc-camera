@@ -27,7 +27,7 @@ import android.view.View;
 abstract class PreviewImpl {
 
     interface Callback {
-        void onSurfaceChanged();
+        void onSurfaceChanged(Surface surface);
 
         void onSurfaceDestroyed();
     }
@@ -52,8 +52,8 @@ abstract class PreviewImpl {
 
     abstract boolean isReady();
 
-    protected void dispatchSurfaceChanged() {
-        mCallback.onSurfaceChanged();
+    protected void dispatchSurfaceChanged(Surface surface) {
+        mCallback.onSurfaceChanged(surface);
     }
 
     protected void dispatchSurfaceDestroyed() {

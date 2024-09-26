@@ -18,6 +18,7 @@ package com.google.android.cameraview;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.media.CamcorderProfile;
 import android.os.Build;
 import android.os.Parcel;
@@ -35,6 +36,7 @@ import android.graphics.SurfaceTexture;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -273,6 +275,10 @@ public class CameraView extends FrameLayout {
      */
     public boolean isCameraOpened() {
         return mImpl.isCameraOpened();
+    }
+
+    public void registerUsbMonitor() {
+        mImpl.registerUsbMonitor();
     }
 
     /**
@@ -540,7 +546,7 @@ public class CameraView extends FrameLayout {
         }
 
         @Override
-        public void onFramePreview(byte[] data, int width, int height, int orientation) {
+        public void onFramePreview(Bitmap data, int width, int height, int orientation) {
             for (Callback callback : mCallbacks) {
                 callback.onFramePreview(CameraView.this, data, width, height, orientation);
             }
@@ -669,7 +675,7 @@ public class CameraView extends FrameLayout {
         public void onVideoRecorded(CameraView cameraView, String path) {
         }
 
-        public void onFramePreview(CameraView cameraView, byte[] data, int width, int height, int orientation) {
+        public void onFramePreview(CameraView cameraView, Bitmap data, int width, int height, int orientation) {
         }
 
         public void onMountError(CameraView cameraView) {}
