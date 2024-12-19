@@ -53,8 +53,7 @@ dependencies {
 	implementation "com.android.support:support-v4:${supportLibVersion}"
 	implementation "com.android.support:support-annotations:${supportLibVersion}"
 
-	implementation("com.serenegiant:common:${commonLibVersion}") {
-   		exclude module: 'support-v4'
-   	}
+	
+	implementation(files("./libs/common-1.5.2.aar"))
 	implementation project(':libuvccamera')
 }
