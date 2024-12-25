@@ -94,5 +94,5 @@ dependencies {
 	implementation "com.android.support:support-v4:${supportLibVersion}"
 	implementation "com.android.support:support-annotations:${supportLibVersion}"
 
-	implementation(files("./libs/common-1.5.2.aar"))
+	implementation(files("./libs/common-4.1.1.aar"))
 }
